@@ -4,7 +4,7 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = libopenarc contrib docs openarc
+SUBDIRS = libopenarc contrib docs openarc test
 dist_doc_DATA = LICENSE LICENSE.Sendmail RELEASE_NOTES
 dist_noinst_SCRIPTS = libtool
 

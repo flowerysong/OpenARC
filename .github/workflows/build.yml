@@ -4,6 +4,18 @@ on:
   pull_request:
 
 jobs:
+  flake8:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Install flake8
+        run: sudo pip install flake8
+
+      - name: Lint Python code
+        run: flake8 --max-line-length=160
+
   check:
     runs-on: ubuntu-latest
     steps:
@@ -16,8 +28,27 @@ jobs:
       - name: Install dependencies
         run: sudo apt install libbsd-dev libmilter-dev libssl-dev
 
+      - name: Install Python dependencies
+        run: sudo pip install pytest
+
       - name: Build OpenARC
         run: |
           autoreconf -fiv
           CFLAGS='-Wall' ./configure
+          make -j4
+
+      - name: Test OpenARC
+        run: |
+          make check
+
+      - name: Build OpenARC with clang
+        run: |
+          make distclean
+          CC=clang ./configure
+          make -j4
+
+      - name: Build OpenARC without milter
+        run: |
+          make distclean
+          CC=clang ./configure --without-milter
           make -j4

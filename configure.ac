@@ -983,5 +983,6 @@ AC_CONFIG_FILES([
     openarc/openarc.8
     openarc/openarc.conf.5
     openarc/openarc.conf.simple
+    test/Makefile
 ])
 AC_OUTPUT
