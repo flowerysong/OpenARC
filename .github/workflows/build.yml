@@ -63,5 +63,5 @@ jobs:
       - name: Build OpenARC without milter
         run: |
           make distclean
-          CC=clang ./configure --without-milter
+          CC=clang ./configure --disable-filter
           make -j4
