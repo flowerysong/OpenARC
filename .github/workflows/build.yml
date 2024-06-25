@@ -1,0 +1,23 @@
+name: build
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: apt update
+        run: sudo apt update
+
+      - name: Install dependencies
+        run: sudo apt install libbsd-dev libmilter-dev libssl-dev
+
+      - name: Build OpenARC
+        run: |
+          autoreconf -fiv
+          CFLAGS='-Wall' ./configure
+          make -j4
