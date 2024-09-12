@@ -40,7 +40,7 @@
 #define	ARES_TOKENS		";=."
 #define	ARES_TOKENS2		"=."
 
-#define	ARES_MAXTOKENS		512
+#define	ARES_MAXTOKENS		1024
 
 /* tables */
 struct lookup
@@ -337,35 +337,37 @@ ares_xconvert(struct lookup *table, int code)
 }
 
 /*
-**  ARES_DEDUP -- if we've gotten multiple results of the same method,
-**                discard the older one
+**  ARES_METHOD_SEEN -- if we've already seen the results of the method,
+**                      returns its index
 **
 **  Parameters:
 **  	ar -- pointer to a (struct authres)
 **  	n -- the last one that was loaded
+**	m -- the method to be searched
 **
 **  Return value:
-**  	TRUE iff a de-duplication happened, leaving the result referenced by
-** 	"n" open.
+**  	The index of the method in ar, if it is found, else -1
 */
 
-static _Bool
-ares_dedup(struct authres *ar, int n)
+static int
+ares_method_seen(struct authres *ar, int n, ares_method_t m)
 {
 	int c;
 
+	if (ar->ares_result[n].result_method == ARES_METHOD_DKIM)
+	{
+		/* All results of DKIM should be kept */
+		return -1;
+	}
 	for (c = 0; c < n; c++)
 	{
-		if (ar->ares_result[c].result_method == ar->ares_result[n].result_method &&
-		    ar->ares_result[c].result_method != ARES_METHOD_DKIM)
+		if (ar->ares_result[c].result_method == m)
 		{
-			memcpy(&ar->ares_result[c], &ar->ares_result[n],
-			       sizeof(ar->ares_result[c]));
-			return TRUE;
+			return c;
 		}
 	}
 
-	return FALSE;
+	return -1;
 }
 
 /*
@@ -390,6 +392,8 @@ ares_parse(u_char *hdr, struct authres *ar)
 	int r = 0;
 	int state;
 	int prevstate;
+	int i; /* index of a result to be recorded */
+	ares_method_t m;
 	u_char tmp[ARC_MAXHEADER + 2];
 	u_char *tokens[ARES_MAXTOKENS];
 
@@ -406,14 +410,21 @@ ares_parse(u_char *hdr, struct authres *ar)
 	prevstate = -1;
 	state = 0;
 	n = 0;
+	i = 0;
 
 	for (c = 0; c < ntoks; c++)
 	{
 		if (tokens[c][0] == '(')		/* comment */
 		{
-			strlcpy((char *) ar->ares_result[n - 1].result_comment,
-			        (char *) tokens[c],
-			        sizeof ar->ares_result[n - 1].result_comment);
+			if (i >= 0 && prevstate == 5)
+			{
+				/* record at most one comment only */
+				assert(state == 6);
+				strlcpy((char *) ar->ares_result[i].result_comment,
+				        (char *) tokens[c],
+				        sizeof ar->ares_result[i].result_comment);
+				prevstate = state;
+			}
 			continue;
 		}
 
@@ -488,27 +499,55 @@ ares_parse(u_char *hdr, struct authres *ar)
 			break;
 
 		  case 3:				/* method/none */
-			if (n == 0 || !ares_dedup(ar, n))
-				n++;
-
-			if (n >= MAXARESULTS)
-				return 0;
-
-			r = 0;
-
 			if (strcasecmp((char *) tokens[c], "none") == 0)
 			{
-				if (n > 0)
-					n--;
-
-				prevstate = state;
-				state = 14;
-
-				continue;
+				switch (prevstate)
+				{
+				  case 0:
+				  case 1:
+				  case 2:
+					prevstate = state;
+					state = 14;
+					continue;
+				 default:
+					/* should not have other resinfo */
+					return -1;
+				}
 			}
 
-			ar->ares_result[n - 1].result_method = ares_convert(methods,
-			                                                    (char *) tokens[c]);
+			m = ares_convert(methods, (char *) tokens[c]);
+			switch(m)
+			{
+			  case ARES_METHOD_UNKNOWN:
+				i = -1;
+				break;
+			  case ARES_METHOD_DKIM:
+				i = n;
+				break;
+			  default:
+				i = ares_method_seen(ar, n, m);
+				if (i == -1)
+				{
+					i = n;
+				}
+				else
+				{
+					/* Reuse results field of same method */
+					memset(&ar->ares_result[i], '\0',
+					       sizeof(ar->ares_result[i]));
+				}
+			}
+
+			r = 0;
+			if (i >= MAXARESULTS)
+			{
+				/* continue parsing, but don't record */
+				i = -1;
+			}
+
+			if (i >= 0) {
+				ar->ares_result[i].result_method = m;
+			}
 			prevstate = state;
 			state = 4;
 
@@ -525,9 +564,12 @@ ares_parse(u_char *hdr, struct authres *ar)
 			break;
 
 		  case 5:				/* result */
-			ar->ares_result[n - 1].result_result = ares_convert(aresults,
-			                                                    (char *) tokens[c]);
-			ar->ares_result[n - 1].result_comment[0] = '\0';
+			if (i >= 0)
+			{
+				ar->ares_result[i].result_result = ares_convert(aresults,
+				                                                (char *) tokens[c]);
+				ar->ares_result[i].result_comment[0] = '\0';
+			}
 			prevstate = state;
 			state = 6;
 
@@ -544,9 +586,12 @@ ares_parse(u_char *hdr, struct authres *ar)
 			break;
 
 		  case 8:
-			strlcpy((char *) ar->ares_result[n - 1].result_reason,
-			        (char *) tokens[c],
-			        sizeof ar->ares_result[n - 1].result_reason);
+			if (i >= 0)
+			{
+				strlcpy((char *) ar->ares_result[i].result_reason,
+				        (char *) tokens[c],
+				        sizeof ar->ares_result[i].result_reason);
+			}
 
 			prevstate = state;
 			state = 9;
@@ -557,6 +602,11 @@ ares_parse(u_char *hdr, struct authres *ar)
 			if (tokens[c][0] == ';' &&	/* neither */
 			    tokens[c][1] == '\0')
 			{
+				if (i == n)
+				{
+					n++;
+				}
+
 				prevstate = state;
 				state = 3;
 
@@ -585,9 +635,12 @@ ares_parse(u_char *hdr, struct authres *ar)
 			{
 				r--;
 
-				strlcat((char *) ar->ares_result[n - 1].result_value[r],
-				        (char *) tokens[c],
-				        sizeof ar->ares_result[n - 1].result_value[r]);
+				if (i >= 0)
+				{
+					strlcat((char *) ar->ares_result[i].result_value[r],
+					        (char *) tokens[c],
+					        sizeof ar->ares_result[i].result_value[r]);
+				}
 
 				prevstate = state;
 				state = 13;
@@ -598,6 +651,11 @@ ares_parse(u_char *hdr, struct authres *ar)
 			if (tokens[c][0] == ';' &&
 			    tokens[c][1] == '\0')
 			{
+				if (i == n)
+				{
+					n++;
+				}
+
 				prevstate = state;
 				state = 3;
 
@@ -611,8 +669,10 @@ ares_parse(u_char *hdr, struct authres *ar)
 				if (x == ARES_PTYPE_UNKNOWN)
 					return -1;
 
-				if (r < MAXPROPS)
-					ar->ares_result[n - 1].result_ptype[r] = x;
+				if (r < MAXPROPS && i >= 0)
+				{
+					ar->ares_result[i].result_ptype[r] = x;
+				}
 
 				prevstate = state;
 				state = 10;
@@ -631,11 +691,11 @@ ares_parse(u_char *hdr, struct authres *ar)
 			break;
 
 		  case 11:				/* property */
-			if (r < MAXPROPS)
+			if (r < MAXPROPS && i >= 0)
 			{
-				strlcpy((char *) ar->ares_result[n - 1].result_property[r],
+				strlcpy((char *) ar->ares_result[i].result_property[r],
 				        (char *) tokens[c],
-				        sizeof ar->ares_result[n - 1].result_property[r]);
+				        sizeof ar->ares_result[i].result_property[r]);
 			}
 
 			prevstate = state;
@@ -656,11 +716,14 @@ ares_parse(u_char *hdr, struct authres *ar)
 		  case 13:				/* value */
 			if (r < MAXPROPS)
 			{
-				strlcat((char *) ar->ares_result[n - 1].result_value[r],
-				        (char *) tokens[c],
-				        sizeof ar->ares_result[n - 1].result_value[r]);
+				if (i >= 0)
+				{
+					strlcat((char *) ar->ares_result[i].result_value[r],
+					        (char *) tokens[c],
+					        sizeof ar->ares_result[i].result_value[r]);
+					ar->ares_result[i].result_props = r + 1;
+				}
 				r++;
-				ar->ares_result[n - 1].result_props = r;
 			}
 
 			prevstate = state;
@@ -680,10 +743,10 @@ ares_parse(u_char *hdr, struct authres *ar)
 	    state == 11 || state == 12)
 		return -1;
 
-	if (n > 1)
+	if (i == n)
 	{
-		if (ares_dedup(ar, n - 1))
-			n--;
+		/* the last resinfo was added */
+		n++;
 	}
 
 	ar->ares_count = n;
@@ -750,8 +813,6 @@ ares_getptype(ares_ptype_t ptype)
 **  	EX_USAGE or EX_OK
 */
 
-# define NTOKENS 256
-
 int
 main(int argc, char **argv)
 {
@@ -761,8 +822,8 @@ main(int argc, char **argv)
 	char *p;
 	char *progname;
 	struct authres ar;
-	u_char buf[2048];
-	u_char *toks[NTOKENS];
+	u_char buf[ARC_MAXHEADER + 2];
+	u_char *toks[ARES_MAXTOKENS];
 
 	progname = (p = strrchr(argv[0], '/')) == NULL ? argv[0] : p + 1;
 
@@ -772,13 +833,14 @@ main(int argc, char **argv)
 		return EX_USAGE;
 	}
 
-	c = ares_tokenize(argv[1], buf, sizeof buf, toks, NTOKENS);
+	c = ares_tokenize(((u_char **)argv)[1], buf, sizeof buf, toks,
+	                  ARES_MAXTOKENS);
 	for (d = 0; d < c; d++)
 		printf("token %d = '%s'\n", d, toks[d]);
 
 	printf("\n");
 
-	status = ares_parse(argv[1], &ar);
+	status = ares_parse(((u_char **)argv)[1], &ar);
 	if (status == -1)
 	{
 		printf("%s: ares_parse() returned -1\n", progname);
@@ -804,6 +866,7 @@ main(int argc, char **argv)
 		       ares_xconvert(aresults,
 		                     ar.ares_result[c].result_result));
 		printf("\treason \"%s\"\n", ar.ares_result[c].result_reason);
+		printf("\tcomment \"%s\"\n", ar.ares_result[c].result_comment);
 
 		for (d = 0; d < ar.ares_result[c].result_props; d++)
 		{

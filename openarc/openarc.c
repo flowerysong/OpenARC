@@ -3717,7 +3717,16 @@ mlfi_eom(SMFICTX *ctx)
 				for (n = 0; n < ar.ares_count; n++)
 				{
 					if (ar.ares_result[n].result_method == ARES_METHOD_UNKNOWN)
+					{
+						/* foolproof: should not happen */
+						if (conf->conf_dolog)
+						{
+								syslog(LOG_DEBUG,
+								       "%s: internal error: unknown method is found in ares_result, ignored",
+								       afc->mctx_jobid);
+						}
 						continue;
+					}
 					if (ar.ares_result[n].result_method == ARES_METHOD_ARC)
 					{
 						/*
