@@ -64,6 +64,7 @@ typedef int ares_ptype_t;
 #define	ARES_PTYPE_HEADER	1
 #define	ARES_PTYPE_BODY		2
 #define	ARES_PTYPE_POLICY	3
+#define	ARES_PTYPE_COMMENT	4
 
 /* RESULT structure -- a single result */
 struct result
@@ -73,7 +74,6 @@ struct result
 	ares_result_t	result_result;
 	ares_ptype_t	result_ptype[MAXPROPS];
 	unsigned char	result_reason[MAXAVALUE + 1];
-	unsigned char	result_comment[MAXAVALUE + 1];
 	unsigned char	result_property[MAXPROPS][MAXAVALUE + 1];
 	unsigned char	result_value[MAXPROPS][MAXAVALUE + 1];
 };
@@ -87,20 +87,7 @@ struct authres
 	struct result	ares_result[MAXARESULTS];
 };
 
-/*
-**  ARES_PARSE -- parse an Authentication-Results: header, return a
-**                structure containing a parsed result
-**
-**  Parameters:
-**  	hdr -- NULL-terminated contents of an Authentication-Results:
-**  	       header field
-**  	ar -- a pointer to a (struct authres) loaded by values after parsing
-**
-**  Return value:
-**  	0 on success, -1 on failure.
-*/
-
-extern int ares_parse __P((u_char *, struct authres *));
+extern int ares_parse __P((u_char *, struct authres *, const char *));
 
 extern const char *ares_getmethod __P((ares_method_t));
 extern const char *ares_getresult __P((ares_result_t));

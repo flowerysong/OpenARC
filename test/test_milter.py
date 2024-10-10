@@ -125,7 +125,7 @@ def test_milter_mode_none_sign(run_miltertest):
         [
             ['example.com; iprev=pass\n\tpolicy.iprev=192.0.2.1 (mail.example.com);\n\tspf=pass (domain of foo@example.com\n\t designates 192.0.2.1 as permitted sender); dkim=pass header.i=@example.com header.s=foo'],
             # FIXME: should the folded whitespace in the comment be removed?
-            'iprev=pass policy.iprev=192.0.2.1; spf=pass (domain of foo@example.com\n\t designates 192.0.2.1 as permitted sender); dkim=pass header.i=@example.com header.s=foo; arc=none',
+            'iprev=pass policy.iprev=192.0.2.1 (mail.example.com); spf=pass (domain of foo@example.com\n\t designates 192.0.2.1 as permitted sender); dkim=pass header.i=@example.com header.s=foo; arc=none',
         ],
         # Multiple headers
         [
@@ -134,7 +134,7 @@ def test_milter_mode_none_sign(run_miltertest):
                 'example.com; spf=pass (domain of foo@example.com\n\t designates 192.0.2.1 as permitted sender)',
                 'example.com; dkim=pass header.i=@example.com header.s=foo',
             ],
-            'iprev=pass policy.iprev=192.0.2.1; spf=pass (domain of foo@example.com\n\t designates 192.0.2.1 as permitted sender); dkim=pass header.i=@example.com header.s=foo; arc=none',
+            'iprev=pass policy.iprev=192.0.2.1 (mail.example.com); spf=pass (domain of foo@example.com\n\t designates 192.0.2.1 as permitted sender); dkim=pass header.i=@example.com header.s=foo; arc=none',
         ],
         # Multiple headers for the same method
         [
@@ -143,7 +143,7 @@ def test_milter_mode_none_sign(run_miltertest):
                 'example.com; spf=fail',
                 'example.com; spf=none',
             ],
-            'spf=pass',
+            'spf=pass; arc=none',
         ],
     ]
 )
