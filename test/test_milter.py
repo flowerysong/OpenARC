@@ -118,8 +118,43 @@ def test_milter_mode_none_sign(run_miltertest):
     assert res['headers'][1][0] == 'ARC-Message-Signature'
     assert res['headers'][2] == ['ARC-Authentication-Results', 'i=1; example.com; arc=none']
 
+@pytest.mark.parametrize(
+    'data',
+    [
+        # Single header
+        [
+            ['example.com; iprev=pass\n\tpolicy.iprev=192.0.2.1 (mail.example.com);\n\tspf=pass (domain of foo@example.com\n\t designates 192.0.2.1 as permitted sender); dkim=pass header.i=@example.com header.s=foo'],
+            # FIXME: should the folded whitespace in the comment be removed?
+            'iprev=pass policy.iprev=192.0.2.1; spf=pass (domain of foo@example.com\n\t designates 192.0.2.1 as permitted sender); dkim=pass header.i=@example.com header.s=foo; arc=none',
+        ],
+        # Multiple headers
+        [
+            [
+                'example.com; iprev=pass\n\tpolicy.iprev=192.0.2.1 (mail.example.com)',
+                'example.com; spf=pass (domain of foo@example.com\n\t designates 192.0.2.1 as permitted sender)',
+                'example.com; dkim=pass header.i=@example.com header.s=foo',
+            ],
+            'iprev=pass policy.iprev=192.0.2.1; spf=pass (domain of foo@example.com\n\t designates 192.0.2.1 as permitted sender); dkim=pass header.i=@example.com header.s=foo; arc=none',
+        ],
+        # Multiple headers for the same method
+        [
+            [
+                'example.com; spf=pass',
+                'example.com; spf=fail',
+                'example.com; spf=none',
+            ],
+            'spf=pass',
+        ],
+    ]
+)
+def test_milter_ar(run_miltertest, data):
+    """Test Authentication-Results parsing"""
+    res = run_miltertest([['Authentication-Results', x] for x in data[0]])
 
-def test_milter_ar(run_miltertest):
+    assert res['headers'][3] == ['ARC-Authentication-Results', f'i=1; example.com; {data[1]}']
+
+
+def test_milter_ar_override(run_miltertest):
     """Override the chain validation state with Authentication-Results"""
     res = run_miltertest()
 
@@ -143,7 +178,7 @@ def test_milter_ar(run_miltertest):
     assert len(res['headers']) == 1
 
 
-def test_milter_ar_disabled(run_miltertest):
+def test_milter_ar_override_disabled(run_miltertest):
     """`PermitAuthenticationOverrides = no` preserves the actual state"""
     res = run_miltertest()
 
@@ -158,7 +193,7 @@ def test_milter_ar_disabled(run_miltertest):
     assert res['headers'][3] == ['ARC-Authentication-Results', 'i=2; example.com; arc=pass']
 
 
-def test_milter_ar_multi(run_miltertest):
+def test_milter_ar_override_multi(run_miltertest):
     """Only the most recent A-R header should matter"""
     res = run_miltertest()
 
