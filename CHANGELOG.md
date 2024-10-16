@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - milter - `AuthResIP` configuration option.
+- milter - `RequireSafeKeys` configuration option.
 
 ### Changed
 - libopenarc - `ARC-Message-Signature` and `ARC-Authentication-Results` headers

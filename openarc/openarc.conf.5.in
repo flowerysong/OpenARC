@@ -186,6 +186,11 @@ Specifies the path to a file that should be created at process start
 containing the process ID.
 
 .TP
+.I RequireSafeKeys (boolean)
+Controls whether the filter requires that private keys have safe file
+permissions.
+
+.TP
 .I SealHeaderChecks (string)
 Identifies a file containing header checks that should be done to determine
 whether to seal a message.  Each entry in this file must be of the form

@@ -200,6 +200,14 @@ KeyFile			/var/db/dkim/example.private
 
 # PidFile		filename
 
+##  RequireSafeKeys { yes | no }
+##      default "yes"
+##
+##  Controls whether the filter requires that private keys have safe file
+##  permissions.
+
+# RequireSafeKeys yes
+
 ##  SealHeaderChecks filename
 ##  	default (none)
 ##
