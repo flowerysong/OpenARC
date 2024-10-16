@@ -510,6 +510,11 @@ arc_canon_init(ARC_MESSAGE *msg, _Bool tmp, _Bool keep)
 
 	for (cur = msg->arc_canonhead; cur != NULL; cur = cur->canon_next)
 	{
+		if (cur->canon_hashbuf != NULL)
+		{
+			/* already initialized, nothing to do */
+			continue;
+		}
 		cur->canon_hashbuf = ARC_MALLOC(ARC_HASHBUFSIZE);
 		if (cur->canon_hashbuf == NULL)
 		{
