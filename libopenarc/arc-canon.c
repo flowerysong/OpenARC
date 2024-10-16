@@ -645,7 +645,7 @@ arc_add_canon(ARC_MESSAGE *msg, int type, arc_canon_t canon, int hashtype,
 		     cur != NULL;
 		     cur = cur->canon_next)
 		{
-			if (cur->canon_type == ARC_CANONTYPE_HEADER ||
+			if (cur->canon_type != ARC_CANONTYPE_HEADER ||
 			    cur->canon_hashtype != hashtype)
 				continue;
 
