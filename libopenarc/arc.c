@@ -3241,6 +3241,38 @@ arc_getseal(ARC_MESSAGE *msg, ARC_HDRFIELD **seal, char *authservid,
 		return ARC_STAT_OK;
 	}
 
+	/* RFC 8617 5.1.2 Marking and Sealing "cv=fail" (Invalid) Chains
+	 *
+	 *    In the case of a failed Authenticated Received Chain, the
+	 *    header fields included in the signature scope of the AS header
+	 *    field b= value MUST only include the ARC Set header fields
+	 *    created by the MTA that detected the malformed chain, as if
+	 *    this newest ARC Set was the only set present.
+	 */
+	if (msg->arc_cstate == ARC_CHAIN_FAIL)
+	{
+		status = arc_add_canon(msg,
+		                       ARC_CANONTYPE_SEAL,
+				       ARC_CANON_RELAXED,
+				       msg->arc_signalg,
+				       NULL,
+				       NULL,
+				       (ssize_t) -1,
+				       &msg->arc_sealcanon);
+		if (status != ARC_STAT_OK)
+		{
+			arc_error(msg, "failed to initialize seal canonicalization object");
+			return status;
+		}
+		_Bool keep = ((msg->arc_library->arcl_flags & ARC_LIBFLAGS_KEEPFILES) != 0);
+		status = arc_canon_init(msg, keep, keep);
+		if (status != ARC_STAT_OK)
+		{
+			arc_error(msg, "arc_canon_init() failed");
+			return status;
+		}
+	}
+
 	/* copy required stuff */
 	msg->arc_domain = domain;
 	msg->arc_selector = selector;

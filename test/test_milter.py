@@ -418,6 +418,22 @@ def test_milter_ar_override_multi(run_miltertest):
     assert res['headers'][3] == ['ARC-Authentication-Results', 'i=2; example.com; arc=pass']
 
 
+def test_milter_seal_failed(run_miltertest):
+    """The seal for failed chains only covers the set from the sealer"""
+    res = run_miltertest()
+
+    # override the result to "fail"
+    headers = res['headers']
+    headers[0][1] = 'example.com; arc=fail'
+    res1 = run_miltertest(headers)
+
+    # mess with the seal
+    headers[1][1] = 'foo'
+    res2 = run_miltertest(headers)
+
+    assert res1['headers'] == res2['headers']
+
+
 def test_milter_authresip(run_miltertest):
     """AuthResIP false disables smtp.remote-ip"""
     res = run_miltertest()
