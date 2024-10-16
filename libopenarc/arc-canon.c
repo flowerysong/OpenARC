@@ -1206,18 +1206,34 @@ arc_canon_runheaders(ARC_MESSAGE *msg)
 			     hdr != NULL;
 			     hdr = hdr->hdr_next)
 			{
-				/*
-				**  MUST NOT sign ARC-Seal; SHOULD NOT sign
-				**  Authentication-Results
-				*/
-
+				/* RFC 8617 4.1.2
+				 * Authentication-Results header fields MUST NOT
+				 * be included in AMS signatures as they are
+				 * likely to be deleted by downstream ADMDs
+				 * (per [RFC8601], Section 5).
+				 *
+				 * ARC-related header fields
+				 * (ARC-Authentication-Results,
+				 * ARC-Message-Signature, and ARC-Seal) MUST NOT
+				 * be included in the list of header fields
+				 * covered by the signature of the AMS header
+				 * field.
+				 */
 				if (strncasecmp(ARC_EXT_AR_HDRNAME,
 				                hdr->hdr_text,
 				                hdr->hdr_namelen) == 0 ||
 				    strncasecmp(ARC_SEAL_HDRNAME,
 				                hdr->hdr_text,
+				                hdr->hdr_namelen) == 0 ||
+				    strncasecmp(ARC_AR_HDRNAME,
+				                hdr->hdr_text,
+						hdr->hdr_namelen) == 0 ||
+				    strncasecmp(ARC_MSGSIG_HDRNAME,
+				                hdr->hdr_text,
 				                hdr->hdr_namelen) == 0)
+				{
 					continue;
+				}
 
 				if (!lib->arcl_signre)
 				{
