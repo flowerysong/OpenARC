@@ -415,3 +415,19 @@ def test_milter_peerlist(run_miltertest):
     """Connections from peers just get `accept` back immediately"""
     with pytest.raises(miltertest.MilterError, match='unexpected response: a'):
         run_miltertest()
+
+
+def test_milter_seal_failed(run_miltertest):
+    """The seal for failed chains only covers the set from the sealer"""
+    res = run_miltertest()
+
+    # override the result to "fail"
+    headers = res['headers']
+    headers[0][1] = 'example.com; arc=fail'
+    res1 = run_miltertest(headers)
+
+    # mess with the seal
+    headers[1][1] = 'foo'
+    res2 = run_miltertest(headers)
+
+    assert res1['headers'] == res2['headers']
