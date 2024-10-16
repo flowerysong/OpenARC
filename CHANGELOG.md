@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 - milter - `AuthResIP` configuration option.
 
 ### Changed
+- libopenarc - `ARC-Message-Signature` and `ARC-Authentication-Results` headers
+  are excluded from the AMS, as required by RFC 8617.
 
 ### Fixed
 

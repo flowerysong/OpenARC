@@ -119,6 +119,11 @@ def test_milter_resign(run_miltertest):
         if i <= 50:
             assert res['headers'][3] == ['ARC-Authentication-Results', f'i={i}; example.com; arc=pass smtp.remote-ip=127.0.0.1']
             assert 'cv=pass' in res['headers'][1][1]
+
+            # quick and dirty parsing
+            ams = {x[0].strip(): x[1].strip() for x in [y.split('=', 1) for y in ''.join(res['headers'][2][1].splitlines()).split(';')]}
+            ams_h = [x.strip() for x in ams['h'].lower().split(':')]
+            assert not any([x in ams_h for x in ['authentication-results', 'arc-seal', 'arc-message-signature', 'arc-authentication-results']])
         else:
             assert len(res['headers']) == 1
 
