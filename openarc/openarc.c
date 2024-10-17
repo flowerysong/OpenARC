@@ -1444,6 +1444,9 @@ arcf_config_load(struct config *data, struct arcf_config *conf,
 			}
 		}
 
+		config_get(data, "RequireSafeKeys", &conf->conf_safekeys,
+		           sizeof conf->conf_safekeys);
+
 		(void) config_get(data, "EnableCoredumps",
 		                  &conf->conf_enablecores,
 		                  sizeof conf->conf_enablecores);
