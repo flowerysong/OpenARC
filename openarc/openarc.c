@@ -3626,7 +3626,7 @@ mlfi_eom(SMFICTX *ctx)
 
 			if (arc_dstring_len(afc->mctx_tmpstr) > 0)
 			{
-				arc_dstring_cat(afc->mctx_tmpstr, "; ");
+				arc_dstring_cat(afc->mctx_tmpstr, ";\n\t");
 			}
 
 			arc_dstring_printf(afc->mctx_tmpstr,
@@ -3665,7 +3665,7 @@ mlfi_eom(SMFICTX *ctx)
 			/* Record the ARC status */
 			if (arc_dstring_len(afc->mctx_tmpstr) > 0)
 			{
-				arc_dstring_cat(afc->mctx_tmpstr, "; ");
+				arc_dstring_cat(afc->mctx_tmpstr, ";\n\t");
 			}
 
 			arc_dstring_printf(afc->mctx_tmpstr, "arc=%s",

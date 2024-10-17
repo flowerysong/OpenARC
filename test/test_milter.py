@@ -172,8 +172,9 @@ def test_milter_mode_none_sign(run_miltertest):
             )],
             (
                 'iprev=pass policy.iprev=192.0.2.1 (mail.example.com);'
-                ' spf=pass (domain of foo@example.com designates 192.0.2.1 as permitted sender);'
-                ' dkim=pass header.i=@example.com header.s=foo; arc=none smtp.remote-ip=127.0.0.1'
+                '\n\tspf=pass (domain of foo@example.com designates 192.0.2.1 as permitted sender);'
+                '\n\tdkim=pass header.i=@example.com header.s=foo;'
+                '\n\tarc=none smtp.remote-ip=127.0.0.1'
             ),
         ],
         # Multiple headers
@@ -185,8 +186,9 @@ def test_milter_mode_none_sign(run_miltertest):
             ],
             (
                 'iprev=pass policy.iprev=192.0.2.1 (mail.example.com);'
-                ' spf=pass (domain of foo@example.com designates 192.0.2.1 as permitted sender);'
-                ' dkim=pass header.i=@example.com header.s=foo; arc=none smtp.remote-ip=127.0.0.1'
+                '\n\tspf=pass (domain of foo@example.com designates 192.0.2.1 as permitted sender);'
+                '\n\tdkim=pass header.i=@example.com header.s=foo;'
+                '\n\tarc=none smtp.remote-ip=127.0.0.1'
             ),
         ],
         # Multiple headers for the same method
@@ -196,12 +198,12 @@ def test_milter_mode_none_sign(run_miltertest):
                 'example.com; spf=fail',
                 'example.com; spf=none',
             ],
-            'spf=pass; arc=none smtp.remote-ip=127.0.0.1',
+            'spf=pass;\n\tarc=none smtp.remote-ip=127.0.0.1',
         ],
         # Same method multiple times
         [
             ['example.com; spf=pass; spf=fail; spf=none'],
-            'spf=pass; arc=none smtp.remote-ip=127.0.0.1',
+            'spf=pass;\n\tarc=none smtp.remote-ip=127.0.0.1',
         ],
         # Header with more results than we're willing to store
         [
@@ -229,22 +231,22 @@ def test_milter_mode_none_sign(run_miltertest):
             )],
             (
                 'dkim=pass header.i=@example.com header.s=foo;'
-                ' dkim=pass header.i=@example.com header.s=bar;'
-                ' dkim=pass header.i=@example.com header.s=baz;'
-                ' dkim=pass header.i=@example.com header.s=qux;'
-                ' dkim=pass header.i=@example.com header.s=quux;'
-                ' dkim=pass header.i=@example.com header.s=quuux;'
-                ' dkim=fail header.i=@example.com header.s=foo;'
-                ' dkim=fail header.i=@example.com header.s=bar;'
-                ' dkim=fail header.i=@example.com header.s=baz;'
-                ' dkim=fail header.i=@example.com header.s=qux;'
-                ' dkim=fail header.i=@example.com header.s=quux;'
-                ' dkim=fail header.i=@example.com header.s=quuux;'
-                ' dkim=policy header.i=@example.com header.s=foo;'
-                ' dkim=policy header.i=@example.com header.s=bar;'
-                ' dkim=policy header.i=@example.com header.s=baz;'
-                ' dkim=policy header.i=@example.com header.s=qux;'
-                ' arc=none smtp.remote-ip=127.0.0.1'
+                '\n\tdkim=pass header.i=@example.com header.s=bar;'
+                '\n\tdkim=pass header.i=@example.com header.s=baz;'
+                '\n\tdkim=pass header.i=@example.com header.s=qux;'
+                '\n\tdkim=pass header.i=@example.com header.s=quux;'
+                '\n\tdkim=pass header.i=@example.com header.s=quuux;'
+                '\n\tdkim=fail header.i=@example.com header.s=foo;'
+                '\n\tdkim=fail header.i=@example.com header.s=bar;'
+                '\n\tdkim=fail header.i=@example.com header.s=baz;'
+                '\n\tdkim=fail header.i=@example.com header.s=qux;'
+                '\n\tdkim=fail header.i=@example.com header.s=quux;'
+                '\n\tdkim=fail header.i=@example.com header.s=quuux;'
+                '\n\tdkim=policy header.i=@example.com header.s=foo;'
+                '\n\tdkim=policy header.i=@example.com header.s=bar;'
+                '\n\tdkim=policy header.i=@example.com header.s=baz;'
+                '\n\tdkim=policy header.i=@example.com header.s=qux;'
+                '\n\tarc=none smtp.remote-ip=127.0.0.1'
             )
         ],
         # Non-matching authserv-id
@@ -259,12 +261,12 @@ def test_milter_mode_none_sign(run_miltertest):
         # CFWS
         [
             ['example.com; (a)spf (Sender Policy Framework) = pass (good) smtp (mail transfer) . (protocol) mailfrom = foo@example.com;'],
-            'spf=pass (good) smtp.mailfrom=foo@example.com; arc=none smtp.remote-ip=127.0.0.1',
+            'spf=pass (good) smtp.mailfrom=foo@example.com;\n\tarc=none smtp.remote-ip=127.0.0.1',
         ],
         # Unknown method
         [
             ['example.com; spf=pass; superspf=pass; arc=pass; superarc=fail policy.krypton=foo;'],
-            'spf=pass; arc=pass',
+            'spf=pass;\n\tarc=pass',
         ],
         # Unknown ptype
         [
@@ -277,7 +279,7 @@ def test_milter_mode_none_sign(run_miltertest):
         # reason
         [
             ['example.com; spf=pass (ip4)reason="192.0.2.1 matched ip4:192.0.2.0/27 in _spf.example.com"; dmarc=pass'],
-            'spf=pass reason="192.0.2.1 matched ip4:192.0.2.0/27 in _spf.example.com" (ip4); dmarc=pass; arc=none smtp.remote-ip=127.0.0.1',
+            'spf=pass reason="192.0.2.1 matched ip4:192.0.2.0/27 in _spf.example.com" (ip4);\n\tdmarc=pass;\n\tarc=none smtp.remote-ip=127.0.0.1',
         ],
         # misplaced reason
         [
@@ -323,12 +325,12 @@ def test_milter_mode_none_sign(run_miltertest):
         # RFC 8904
         [
             ['example.com; dnswl=pass dns.zone=accept.example.com policy.ip=192.0.2.1 policy.txt="sure, yeah" dns.sec=yes'],
-            'dnswl=pass dns.zone=accept.example.com policy.ip=192.0.2.1 policy.txt="sure, yeah" dns.sec=yes; arc=none smtp.remote-ip=127.0.0.1',
+            'dnswl=pass dns.zone=accept.example.com policy.ip=192.0.2.1 policy.txt="sure, yeah" dns.sec=yes;\n\tarc=none smtp.remote-ip=127.0.0.1',
         ],
         # quoted-string
         [
             ['example.com; auth=pass smtp.auth="花木蘭\\"\\\\ []"'],
-            'auth=pass smtp.auth="花木蘭\\"\\\\ []"; arc=none smtp.remote-ip=127.0.0.1',
+            'auth=pass smtp.auth="花木蘭\\"\\\\ []";\n\tarc=none smtp.remote-ip=127.0.0.1',
         ],
         # version
         [
@@ -336,7 +338,7 @@ def test_milter_mode_none_sign(run_miltertest):
                 'example.com 1; spf=pass',
                 'example.com 1 ; dmarc=pass',
             ],
-            'spf=pass; dmarc=pass; arc=none smtp.remote-ip=127.0.0.1',
+            'spf=pass;\n\tdmarc=pass;\n\tarc=none smtp.remote-ip=127.0.0.1',
         ],
         # invalid version
         [
