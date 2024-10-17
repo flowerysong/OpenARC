@@ -118,6 +118,7 @@ struct arcf_config
 	_Bool		conf_keeptmpfiles;	/* keep temp files */
 	_Bool		conf_finalreceiver;	/* act as final receiver */
 	_Bool		conf_overridecv;	/* allow A-R to override CV */
+	_Bool           conf_authresip;		/* include remote IP in A-R */
 	u_int		conf_refcnt;		/* reference count */
 	u_int		conf_mode;		/* mode flags */
 	arc_canon_t	conf_canonhdr;		/* canonicalization for header */
@@ -1144,6 +1145,7 @@ arcf_config_new(void)
 	new->conf_maxhdrsz = DEFMAXHDRSZ;
 	new->conf_overridecv = TRUE;
 	new->conf_safekeys = TRUE;
+	new->conf_authresip = TRUE;
 
 	LIST_INIT(&new->conf_peers);
 	LIST_INIT(&new->conf_internal);
@@ -1455,6 +1457,9 @@ arcf_config_load(struct config *data, struct arcf_config *conf,
 		(void) config_get(data, "PermitAuthenticationOverrides",
 		                  &conf->conf_overridecv,
 				  sizeof conf->conf_overridecv);
+
+		config_get(data, "AuthResIP", &conf->conf_authresip,
+		           sizeof conf->conf_authresip);
 
 		(void) config_get(data, "TemporaryDirectory",
 		                  &conf->conf_tmpdir,
@@ -3494,12 +3499,11 @@ mlfi_eom(SMFICTX *ctx)
 	struct arcf_config *conf;
 	ARC_HDRFIELD *seal = NULL;
 	ARC_HDRFIELD *sealhdr = NULL;
-	const char *ipout = NULL;
 	struct sockaddr *ip;
 	Header hdr;
 	struct authres ar;
 	unsigned char arcchainbuf[ARC_MAXHEADER + 1];
-	char ipbuf[ARC_MAXHOSTNAMELEN + 1];
+	char ipbuf[INET6_ADDRSTRLEN];
 
 	assert(ctx != NULL);
 
@@ -3546,33 +3550,17 @@ mlfi_eom(SMFICTX *ctx)
 	if (hostname == NULL)
 		hostname = HOSTUNKNOWN;
 
+
+	/* get IP string */
 	ip = (struct sockaddr *) &cc->cctx_ip;
 	memset(ipbuf, '\0', sizeof ipbuf);
 
-	switch (ip->sa_family)
+	if (getnameinfo(ip,
+	                (ip->sa_family == AF_INET6) ? sizeof (struct sockaddr_in6)
+	                                            : sizeof (struct sockaddr_in),
+	                ipbuf, sizeof ipbuf, NULL, 0, NI_NUMERICHOST) != 0)
 	{
-	  case AF_INET:
-	  {
-		struct sockaddr_in sin;
-
-		memcpy(&sin, ip, sizeof sin);
-		ipout = inet_ntop(ip->sa_family, &sin.sin_addr,
-		                  ipbuf, sizeof ipbuf);
-		break;
-	  }
-
-	  case AF_INET6:
-	  {
-		struct sockaddr_in6 sin6;
-
-		memcpy(&sin6, ip, sizeof sin6);
-		ipout = inet_ntop(ip->sa_family, &sin6.sin6_addr,
-		                  ipbuf, sizeof ipbuf);
-		break;
-	  }
-
-	  default:
-		break;
+		memset(ipbuf, '\0', sizeof ipbuf);
 	}
 
 	/*
@@ -3682,6 +3670,17 @@ mlfi_eom(SMFICTX *ctx)
 
 			arc_dstring_printf(afc->mctx_tmpstr, "arc=%s",
 			                   arc_chain_status_str(afc->mctx_arcmsg));
+
+			if (conf->conf_authresip && ipbuf[0] != '\0')
+			{
+				_Bool quote = !ares_istoken(ipbuf);
+				arc_dstring_printf(afc->mctx_tmpstr,
+				                   " smtp.remote-ip=%s%s%s",
+						   quote ? "\"" : "",
+						   ipbuf,
+				                   quote ? "\"" : "");
+			}
+
 		}
 
 		/*
@@ -3777,14 +3776,14 @@ mlfi_eom(SMFICTX *ctx)
 		                   conf->conf_authservid,
 		                   arc_chain_status_str(afc->mctx_arcmsg));
 
-		if (ipout != NULL)
+		if (conf->conf_authresip && ipbuf[0] != '\0')
 		{
-			_Bool quote = !ares_istoken(ipout);
+			_Bool quote = !ares_istoken(ipbuf);
 
 			arc_dstring_printf(afc->mctx_tmpstr,
 			                   " smtp.remote-ip=%s%s%s",
 			                   quote ? "\"" : "",
-			                   ipout,
+			                   ipbuf,
 			                   quote ? "\"" : "");
 		}
 

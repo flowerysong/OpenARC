@@ -36,6 +36,10 @@ default to 0, and string and dataset values default to being undefined.
 
 .SH PARAMETERS
 .TP
+.I AuthResIP (Boolean)
+Controls whether Authentication-Results headers include the remote IP.
+
+.TP
 .I AutoRestart (Boolean)
 Automatically re-start on failures.  Use with caution; if the filter
 fails instantly after it starts, this can cause a tight

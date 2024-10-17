@@ -7,6 +7,13 @@
 
 ## CONFIGURATION OPTIONS
 
+##  AuthResIP { yes | no }
+##      default "yes"
+##
+##  Controls whether Authentication-Results headers include the remote IP.
+
+# AuthResIP yes
+
 ##  AuthservID string
 ##  	default (local host name)
 ##
