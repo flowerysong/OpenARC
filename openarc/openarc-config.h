@@ -21,6 +21,7 @@
 /* config definition */
 struct configdef arcf_config[] =
 {
+	{ "AuthResIP",                          CONFIG_TYPE_BOOLEAN,	FALSE },
 	{ "AuthservID",				CONFIG_TYPE_STRING,	FALSE },
 	{ "AutoRestart",			CONFIG_TYPE_BOOLEAN,	FALSE },
 	{ "AutoRestartCount",			CONFIG_TYPE_INTEGER,	FALSE },
