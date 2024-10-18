@@ -57,7 +57,6 @@ struct arc_hdrfield
 	uint32_t		hdr_flags;
 	size_t			hdr_namelen;
 	size_t			hdr_textlen;
-	char *			hdr_colon;
 	char *			hdr_text;
 	void *			hdr_data;
 	struct arc_hdrfield *	hdr_next;

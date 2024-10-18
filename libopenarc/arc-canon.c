@@ -1048,12 +1048,10 @@ arc_canon_runheaders_seal(ARC_MESSAGE *msg)
 
 				tmphdr.hdr_text = arc_dstring_get(msg->arc_hdrbuf);
 				tmphdr.hdr_namelen = cur->canon_sigheader->hdr_namelen;
-				tmphdr.hdr_colon = tmphdr.hdr_text + (cur->canon_sigheader->hdr_colon - cur->canon_sigheader->hdr_text);
 				tmphdr.hdr_textlen = arc_dstring_len(msg->arc_hdrbuf);
 				tmphdr.hdr_flags = 0;
 				tmphdr.hdr_next = NULL;
 
-				arc_lowerhdr(tmphdr.hdr_text);
 				/* XXX -- void? */
 				(void) arc_canon_header(msg, cur, &tmphdr,
 				                        FALSE);
@@ -1357,7 +1355,6 @@ arc_canon_runheaders(ARC_MESSAGE *msg)
 		/* canonicalize */
 		tmphdr.hdr_text = arc_dstring_get(msg->arc_hdrbuf);
 		tmphdr.hdr_namelen = cur->canon_sigheader->hdr_namelen;
-		tmphdr.hdr_colon = tmphdr.hdr_text + (cur->canon_sigheader->hdr_colon - cur->canon_sigheader->hdr_text);
 		tmphdr.hdr_textlen = arc_dstring_len(msg->arc_hdrbuf);
 		tmphdr.hdr_flags = 0;
 		tmphdr.hdr_next = NULL;
@@ -1427,11 +1424,9 @@ arc_canon_signature(ARC_MESSAGE *msg, struct arc_hdrfield *hdr, int type)
 		}
 		tmphdr.hdr_text = arc_dstring_get(msg->arc_hdrbuf);
 		tmphdr.hdr_namelen = hdr->hdr_namelen;
-		tmphdr.hdr_colon = tmphdr.hdr_text + (hdr->hdr_colon - hdr->hdr_text);
 		tmphdr.hdr_textlen = arc_dstring_len(msg->arc_hdrbuf);
 		tmphdr.hdr_flags = 0;
 		tmphdr.hdr_next = NULL;
-		arc_lowerhdr(tmphdr.hdr_text);
 
 		/* canonicalize the signature */
 		status = arc_canon_header(msg, cur, &tmphdr, FALSE);

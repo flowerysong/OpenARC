@@ -479,6 +479,36 @@ arc_dstring_printf(struct arc_dstring *dstr, char *fmt, ...)
 }
 
 /*
+**  ARC_DSTRING_STRIP -- remove matching characters from a string
+**
+**  Parameters:
+**      dstr -- string to process
+**      cset -- characters to remove
+**
+**  Return value:
+**      None.
+*/
+void
+arc_dstring_strip(struct arc_dstring *dstr, const char *cset)
+{
+    size_t newlen = 0;
+    for (size_t i = 0; i <= dstr->ds_len; i++)
+    {
+        while (strchr(cset, dstr->ds_buf[i]) && i <= dstr->ds_len)
+        {
+            i++;
+        }
+        if (i <= dstr->ds_len)
+        {
+            dstr->ds_buf[newlen] = dstr->ds_buf[i];
+            newlen++;
+        }
+    }
+    dstr->ds_buf[newlen] = '\0';
+    dstr->ds_len = newlen;
+}
+
+/*
 **  ARC_COLLAPSE -- remove spaces from a string
 **
 **  Parameters:
@@ -509,38 +539,6 @@ arc_collapse(char *str)
     }
 
     *r = '\0';
-}
-
-/*
-**  ARC_LOWERHDR -- convert a string (presumably a header) to all lowercase,
-**                  but only up to a colon
-**
-**  Parameters:
-**  	str -- string to modify
-**
-**  Return value:
-**  	None.
-*/
-
-void
-arc_lowerhdr(char *str)
-{
-    char *p;
-
-    assert(str != NULL);
-
-    for (p = str; *p != '\0'; p++)
-    {
-        if (*p == ':')
-        {
-            return;
-        }
-
-        if (isascii(*p) && isupper(*p))
-        {
-            *p = tolower(*p);
-        }
-    }
 }
 
 /*
