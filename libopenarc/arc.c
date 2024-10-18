@@ -705,7 +705,7 @@ arc_getamshdr_d(ARC_MESSAGE *msg, size_t initial, char **buf, size_t *buflen,
 			else if (forcewrap || len + pvlen > msg->arc_margin)
 			{
 				forcewrap = FALSE;
-				arc_dstring_catn(msg->arc_hdrbuf, "\n\t", 2);
+				arc_dstring_cat(msg->arc_hdrbuf, "\r\n\t");
 				len = 8;
 
 				if (strcmp(which, "h") == 0)
@@ -734,9 +734,8 @@ arc_getamshdr_d(ARC_MESSAGE *msg, size_t initial, char **buf, size_t *buflen,
 							arc_dstring_cat1(msg->arc_hdrbuf,
 							                 ':');
 							len += 1;
-							arc_dstring_catn(msg->arc_hdrbuf,
-							                 "\n\t ",
-							                 3);
+							arc_dstring_cat(msg->arc_hdrbuf,
+							                "\r\n\t ");
 							len = 9;
 							arc_dstring_catn(msg->arc_hdrbuf,
 							                 tmp,
@@ -781,9 +780,8 @@ arc_getamshdr_d(ARC_MESSAGE *msg, size_t initial, char **buf, size_t *buflen,
 					{
 						if (msg->arc_margin - len == 0)
 						{
-							arc_dstring_catn(msg->arc_hdrbuf,
-							                  "\n\t ",
-							                  3);
+							arc_dstring_cat(msg->arc_hdrbuf,
+							                "\r\n\t ");
 							len = 9;
 						}
 
@@ -2583,10 +2581,6 @@ arc_parse_header_field(ARC_MESSAGE *msg, const unsigned char *hdr, size_t hlen,
 
 	h->hdr_namelen = end != NULL ? end - hdr : hlen;
 	h->hdr_textlen = hlen;
-	if (colon == NULL)
-		h->hdr_colon = NULL;
-	else
-		h->hdr_colon = h->hdr_text + (colon - hdr);
 	h->hdr_flags = 0;
 	h->hdr_next = NULL;
 
@@ -2874,7 +2868,7 @@ arc_eoh(ARC_MESSAGE *msg)
 
 			kvtype = arc_name_to_code(archdrnames, hnbuf);
 			status = arc_process_set(msg, kvtype,
-			                         h->hdr_colon + 1,
+			                         h->hdr_text + h->hdr_namelen + 1,
 			                         h->hdr_textlen - h->hdr_namelen - 1,
 			                         h,
 			                         &set);
@@ -3375,7 +3369,7 @@ arc_getseal(ARC_MESSAGE *msg, ARC_HDRFIELD **seal, char *authservid,
 	**  Part 1: Construct a new AAR
 	*/
 
-	arc_dstring_printf(dstr, "ARC-Authentication-Results:i=%u; %s",
+	arc_dstring_printf(dstr, "ARC-Authentication-Results: i=%u; %s",
 	                   msg->arc_nsets + 1,
 	                   msg->arc_authservid);
 	if (ar == NULL) {
@@ -3411,8 +3405,7 @@ arc_getseal(ARC_MESSAGE *msg, ARC_HDRFIELD **seal, char *authservid,
 
 	/* construct the AMS */
 	arc_dstring_blank(dstr);
-	arc_dstring_catn(dstr, ARC_MSGSIG_HDRNAME ":",
-	                 sizeof ARC_MSGSIG_HDRNAME);
+	arc_dstring_cat(dstr, ARC_MSGSIG_HDRNAME ": ");
 
 	status = arc_getamshdr_d(msg, arc_dstring_len(dstr), &sighdr, &len,
 	                         FALSE);
@@ -3426,7 +3419,6 @@ arc_getseal(ARC_MESSAGE *msg, ARC_HDRFIELD **seal, char *authservid,
 	len = arc_dstring_len(dstr);
 
 	hdr.hdr_text = arc_dstring_get(dstr);
-	hdr.hdr_colon = hdr.hdr_text + ARC_MSGSIG_HDRNAMELEN;
 	hdr.hdr_namelen = ARC_MSGSIG_HDRNAMELEN;
 	hdr.hdr_textlen = len;
 	hdr.hdr_flags = 0;
@@ -3506,6 +3498,11 @@ arc_getseal(ARC_MESSAGE *msg, ARC_HDRFIELD **seal, char *authservid,
 		goto error;
 	}
 
+	/* This header is generated with \r\n so that simple canonicalization
+	 * will work, but the established interface is that the library returns
+	 * just \n.
+	 */
+	arc_dstring_strip(dstr, "\r");
 	h->hdr_text = ARC_STRDUP(arc_dstring_get(dstr));
 	if (h->hdr_text == NULL)
 	{
@@ -3515,7 +3512,6 @@ arc_getseal(ARC_MESSAGE *msg, ARC_HDRFIELD **seal, char *authservid,
 		ARC_FREE(h);
 		goto error;
 	}
-	h->hdr_colon = h->hdr_text + ARC_MSGSIG_HDRNAMELEN;
 	h->hdr_namelen = ARC_MSGSIG_HDRNAMELEN;
 	h->hdr_textlen = arc_dstring_len(dstr);
 	h->hdr_flags = 0;
@@ -3529,8 +3525,7 @@ arc_getseal(ARC_MESSAGE *msg, ARC_HDRFIELD **seal, char *authservid,
 	*/
 
 	arc_dstring_blank(dstr);
-	arc_dstring_catn(dstr, ARC_SEAL_HDRNAME ":",
-	                 sizeof ARC_SEAL_HDRNAME);
+	arc_dstring_cat(dstr, ARC_SEAL_HDRNAME ": ");
 
 	/* feed the seal we have so far */
 	status = arc_canon_add_to_seal(msg);
@@ -3551,7 +3546,6 @@ arc_getseal(ARC_MESSAGE *msg, ARC_HDRFIELD **seal, char *authservid,
 	arc_dstring_catn(dstr, sighdr, len);
 
 	hdr.hdr_text = arc_dstring_get(dstr);
-	hdr.hdr_colon = hdr.hdr_text + ARC_SEAL_HDRNAMELEN;
 	hdr.hdr_namelen = ARC_SEAL_HDRNAMELEN;
 	hdr.hdr_textlen = len;
 	hdr.hdr_flags = 0;
@@ -3606,6 +3600,7 @@ arc_getseal(ARC_MESSAGE *msg, ARC_HDRFIELD **seal, char *authservid,
 		status = ARC_STAT_INTERNAL;
 		goto error;
 	}
+	arc_dstring_strip(dstr, "\r");
 	h->hdr_text = ARC_STRDUP(arc_dstring_get(dstr));
 	if (h->hdr_text == NULL)
 	{
@@ -3613,7 +3608,6 @@ arc_getseal(ARC_MESSAGE *msg, ARC_HDRFIELD **seal, char *authservid,
 		status = ARC_STAT_INTERNAL;
 		goto error;
 	}
-	h->hdr_colon = h->hdr_text + ARC_SEAL_HDRNAMELEN;
 	h->hdr_namelen = ARC_SEAL_HDRNAMELEN;
 	h->hdr_textlen = len;
 	h->hdr_flags = 0;
@@ -3669,7 +3663,7 @@ arc_hdr_name(ARC_HDRFIELD *hdr, size_t *len)
 unsigned char *
 arc_hdr_value(ARC_HDRFIELD *hdr)
 {
-	return (unsigned char *) hdr->hdr_colon + 1;
+	return (unsigned char *) hdr->hdr_text + hdr->hdr_namelen + 1;
 }
 
 /*

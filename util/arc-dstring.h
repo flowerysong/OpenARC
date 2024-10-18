@@ -28,6 +28,7 @@ extern bool arc_dstring_cat(struct arc_dstring *, const char *);
 extern bool arc_dstring_cat1(struct arc_dstring *, int);
 extern bool arc_dstring_catn(struct arc_dstring *, const char *, size_t);
 extern bool arc_dstring_copy(struct arc_dstring *, const char *);
+extern void arc_dstring_strip(struct arc_dstring *, const char *);
 extern void arc_dstring_free(struct arc_dstring *);
 extern char *arc_dstring_get(struct arc_dstring *);
 extern int arc_dstring_len(struct arc_dstring *);
@@ -37,6 +38,5 @@ extern size_t arc_dstring_printf(struct arc_dstring *dstr, char *fmt, ...);
 extern void arc_clobber_array(char **);
 extern void arc_collapse(char *);
 extern char **arc_copy_array(char **);
-extern void arc_lowerhdr(char *);
 
 #endif /* ARC_DSTRING_H_ */

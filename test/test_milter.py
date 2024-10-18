@@ -48,6 +48,8 @@ def run_miltertest(request, milter, milter_config):
         ins_headers = []
         for msg in resp:
             if msg[0] == miltertest.SMFIR_INSHEADER:
+                # Check for invalid characters
+                assert '\r' not in msg[1]['value']
                 ins_headers.insert(msg[1]['index'], [msg[1]['name'], msg[1]['value']])
             elif msg[0] in miltertest.DISPOSITION_REPLIES:
                 assert msg[0] == miltertest.SMFIR_ACCEPT
@@ -119,6 +121,16 @@ def test_milter_staticmsg(run_miltertest):
     assert 'cv=pass' in res['headers'][1][1]
     assert res['headers'][2][0] == 'ARC-Message-Signature'
     assert res['headers'][3] == ['ARC-Authentication-Results', ' i=2; example.com; arc=pass smtp.remote-ip=127.0.0.1']
+
+
+def test_milter_canon_simple(run_miltertest):
+    """Sign a message with simple canonicalization and then verify it"""
+    res = run_miltertest()
+    assert 'c=simple/simple' in res['headers'][1][1]
+
+    res = run_miltertest(res['headers'])
+    assert 'cv=pass' in res['headers'][0][1]
+    assert res['headers'][2] == ['ARC-Authentication-Results', ' i=2; example.com; arc=pass smtp.remote-ip=127.0.0.1']
 
 
 def test_milter_resign(run_miltertest):

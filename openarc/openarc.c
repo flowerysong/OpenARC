@@ -3716,24 +3716,20 @@ mlfi_eom(SMFICTX *ctx)
 		     sealhdr = arc_hdr_next(sealhdr))
 		{
 			size_t len;
-			char *hfvdest;
+			char *hfvalue;
 			char hfname[BUFRSZ + 1];
-			char hfvalue[ARC_MAXHEADER + 1];
 
 			memset(hfname, '\0', sizeof hfname);
 			strlcpy(hfname, (char *) arc_hdr_name(sealhdr, &len),
 			        sizeof hfname);
 			hfname[len] = '\0';
 
-			hfvdest = hfvalue;
-			memset(hfvalue, '\0', sizeof hfvalue);
-			if (cc->cctx_noleadspc)
+			hfvalue = (char *) arc_hdr_value(sealhdr);
+			if (!cc->cctx_noleadspc)
 			{
-				hfvalue[0] = ' ';
-				hfvdest++;
+				/* strip off the leading space */
+				hfvalue++;
 			}
-			strlcat(hfvalue, (char *) arc_hdr_value(sealhdr),
-			        sizeof hfvalue);
 
 			status = arcf_insheader(ctx, 0, hfname, hfvalue);
 			if (status == MI_FAILURE)

@@ -11,10 +11,12 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - libopenarc - `ARC-Message-Signature` and `ARC-Authentication-Results` headers
   are excluded from the AMS, as required by RFC 8617.
+- libopenarc - ARC headers are returned with a space before the header value.
 
 ### Fixed
 - libopenarc - seals on failed chains only cover the latest ARC header set,
   as required by RFC 8617 section 5.1.2.
+- libopenarc - signing with simple header canonicalization works.
 
 ## 1.0.0 - 2024-10-18
 
