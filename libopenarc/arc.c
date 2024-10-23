@@ -1576,8 +1576,9 @@ arc_process_set(ARC_MESSAGE    *msg,
 
     for (p = hcopy; *p != '\0' && !stop; p++)
     {
-        if (!isascii(*p) || (!isprint(*p) && !isspace(*p)))
+        if (isascii(*p) && !isprint(*p) && !isspace(*p))
         {
+            /* FIXME: should this do more validation of UTF-8? */
             arc_error(
                 msg, "invalid character (ASCII 0x%02x at offset %d) in %s data",
                 *p, p - hcopy, settype);
@@ -1600,7 +1601,7 @@ arc_process_set(ARC_MESSAGE    *msg,
             else
             {
                 arc_error(msg,
-                          "syntax error in %s data (ASCII 0x%02x at offset %d)",
+                          "syntax error in %s data (char 0x%02x at offset %d)",
                           settype, *p, p - hcopy);
                 set->set_bad = true;
                 return ARC_STAT_SYNTAX;
@@ -1621,7 +1622,7 @@ arc_process_set(ARC_MESSAGE    *msg,
             else if (*p == ';' || spaced)
             {
                 arc_error(msg,
-                          "syntax error in %s data (ASCII 0x%02x at offset %d)",
+                          "syntax error in %s data (char 0x%02x at offset %d)",
                           settype, *p, p - hcopy);
                 set->set_bad = true;
                 return ARC_STAT_SYNTAX;

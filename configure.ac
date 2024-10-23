@@ -538,6 +538,14 @@ AC_SUBST(OPENSSL_CFLAGS)
 AC_SUBST(OPENSSL_LIBS)
 
 #
+# Libidn2
+#
+
+PKG_CHECK_MODULES([LIBIDN2], [libidn2])
+AC_SUBST(LIBIDN2_CFLAGS)
+AC_SUBST(LIBIDN2_LIBS)
+
+#
 # libmilter
 #
 AC_MSG_CHECKING([for milter library and includes])

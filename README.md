@@ -35,10 +35,16 @@ file to determine which license(s) are applicable to that file.
 
 In order to build OpenARC, you will need:
 
+* A C compiler. Compilation has been tested with [GCC](https://gcc.gnu.org/)
+  and [clang](https://clang.llvm.org/), and other modern compilers should also
+  work.
+* make
+* pkg-config or a compatible replacement.
 * [OpenSSL](https://openssl.org) >= 1.0.0
 * Native implementations of `strlcat()` and `strlcpy()`,
   [libbsd](https://libbsd.freedesktop.org/), or some other library that
   provides them.
+* [Libidn2](https://gitlab.com/libidn/libidn2)
 
 If you are building the filter, you will also need:
 
@@ -57,13 +63,13 @@ you will also need:
 ### DNF-based systems
 
 ```
-$ dnf install autoconf automake gcc jansson-devel libbsd-devel libtool openssl-devel sendmail-milter-devel
+$ dnf install autoconf automake gcc jansson-devel libbsd-devel libidn2-devel libtool openssl-devel sendmail-milter-devel
 ```
 
 ### Ubuntu
 
 ```
-$ apt install build-essential libbsd-dev libjansson-dev libmilter-dev libssl-dev
+$ apt install build-essential libbsd-dev libidn2-dev libjansson-dev libmilter-dev libssl-dev
 ```
 
 ## Installation

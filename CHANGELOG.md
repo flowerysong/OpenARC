@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
   `--with-libjansson=/path` to `configure`.
 - Building the milter defaults to requiring Jansson. You can explicitly
   disable it by passing `--without-libjansson` to `configure`.
+- Libidn2 is now required to build OpenARC.
 - libopenarc - `ARC-Message-Signature` and `ARC-Authentication-Results` headers
   are excluded from the AMS, as required by RFC 8617.
 - libopenarc - ARC headers are returned with a space before the header value.
@@ -29,6 +30,8 @@ All notable changes to this project will be documented in this file.
 - libopenarc - ARC headers with a misplaced instance tag are rejected.
 - libopenarc - unlikely memory leak after memory allocation failures.
 - libopenarc - The installed pkg-config file is more correct.
+- libopenarc - U-labels (domain labels encoded as UTF-8) are allowed in `d=`
+  and `s=` tags.
 - openarc - use after free.
 - openarc - unlikely division by zero.
 - openarc - small memory leak during config loading.

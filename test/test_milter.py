@@ -477,6 +477,17 @@ def test_milter_seal_failed(run_miltertest):
     assert res1['headers'] == res2['headers']
 
 
+def test_milter_idna(run_miltertest):
+    """U-labels in domains and selectors"""
+    res = run_miltertest()
+
+    assert res['headers'][1][1].startswith(' i=1; a=rsa-sha256; d=시험.example.com; s=예;')
+
+    res = run_miltertest(res['headers'])
+    assert 'cv=pass' in res['headers'][0][1]
+    assert res['headers'][2] == ['ARC-Authentication-Results', ' i=2; example.com; arc=pass smtp.remote-ip=127.0.0.1']
+
+
 def test_milter_authresip(run_miltertest):
     """AuthResIP false disables smtp.remote-ip"""
     res = run_miltertest()

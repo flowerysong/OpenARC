@@ -17,7 +17,7 @@ jobs:
         run: sudo apt update
 
       - name: Install dependencies
-        run: sudo apt install libbsd-dev libmilter-dev libssl-dev
+        run: sudo apt install libbsd-dev libidn2-dev libmilter-dev libssl-dev
 
       - name: Build dist tarball
         run: |

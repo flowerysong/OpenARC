@@ -28,6 +28,9 @@
 #include "arc-types.h"
 #include "arc-util.h"
 
+/* libidn2 */
+#include <idn2.h>
+
 /* libbsd if found */
 #ifdef USE_BSD_H
 #include <bsd/string.h>
@@ -85,7 +88,7 @@ arc_get_key_dns(ARC_MESSAGE *msg, char *buf, size_t buflen)
     unsigned char *cp;
     unsigned char *eom;
     char          *eob;
-    unsigned char  qname[ARC_MAXHOSTNAMELEN + 1];
+    char           qname[ARC_MAXHOSTNAMELEN + 1];
     unsigned char  ansbuf[MAXPACKET];
     struct timeval timeout;
     HEADER         hdr;
@@ -96,13 +99,31 @@ arc_get_key_dns(ARC_MESSAGE *msg, char *buf, size_t buflen)
 
     lib = msg->arc_library;
 
-    n = snprintf((char *) qname, sizeof qname - 1, "%s.%s.%s",
-                 msg->arc_selector, ARC_DNSKEYNAME, msg->arc_domain);
+    n = snprintf(qname, sizeof qname - 1, "%s.%s.%s", msg->arc_selector,
+                 ARC_DNSKEYNAME, msg->arc_domain);
     if (n == -1 || n > sizeof qname - 1)
     {
         arc_error(msg, "key query name too large");
         return ARC_STAT_NORESOURCE;
     }
+
+    char *qname_idn;
+    status = idn2_to_ascii_8z(qname, &qname_idn,
+                              IDN2_NONTRANSITIONAL | IDN2_NFC_INPUT);
+    if (status != IDN2_OK)
+    {
+        arc_error(msg, "failed to translate %s to ASCII: %s", qname,
+                  idn2_strerror(status));
+        return ARC_STAT_KEYFAIL;
+    }
+
+    if (strlcpy(qname, qname_idn, sizeof qname) >= sizeof qname)
+    {
+        arc_error(msg, "key query name too large");
+        idn2_free(qname_idn);
+        return ARC_STAT_NORESOURCE;
+    }
+    idn2_free(qname_idn);
 
     anslen = sizeof ansbuf;
 
@@ -116,8 +137,8 @@ arc_get_key_dns(ARC_MESSAGE *msg, char *buf, size_t buflen)
         return ARC_STAT_KEYFAIL;
     }
 
-    status = lib->arcl_dns_start(lib->arcl_dns_service, T_TXT, qname, ansbuf,
-                                 anslen, &q);
+    status = lib->arcl_dns_start(lib->arcl_dns_service, T_TXT,
+                                 (unsigned char *) qname, ansbuf, anslen, &q);
 
     if (status != 0)
     {
@@ -199,7 +220,7 @@ arc_get_key_dns(ARC_MESSAGE *msg, char *buf, size_t buflen)
     for (qdcount = ntohs((unsigned short) hdr.qdcount); qdcount > 0; qdcount--)
     {
         /* copy it first */
-        (void) dn_expand((unsigned char *) &ansbuf, eom, cp, (char *) qname,
+        (void) dn_expand((unsigned char *) &ansbuf, eom, cp, qname,
                          sizeof qname);
 
         if ((n = dn_skipname(cp, eom)) < 0)
@@ -408,8 +429,17 @@ arc_get_key_file(ARC_MESSAGE *msg, char *buf, size_t buflen)
         return ARC_STAT_NORESOURCE;
     }
 
+    char *idn_name;
+    if (idn2_to_ascii_8z(name, &idn_name,
+                         IDN2_NONTRANSITIONAL | IDN2_NFC_INPUT) != IDN2_OK)
+    {
+        arc_error(msg, "failed to translate %s to ASCII", name);
+        fclose(f);
+        return ARC_STAT_KEYFAIL;
+    }
+
     memset(buf, '\0', buflen);
-    while (fgets((char *) buf, buflen, f) != NULL)
+    while (fgets(buf, buflen, f) != NULL)
     {
         if (buf[0] == '#')
         {
@@ -436,14 +466,16 @@ arc_get_key_file(ARC_MESSAGE *msg, char *buf, size_t buflen)
             }
         }
 
-        if (strcasecmp((char *) name, (char *) buf) == 0 && p2 != NULL)
+        if (strcasecmp(idn_name, buf) == 0 && p2 != NULL)
         {
             memmove(buf, p2, strlen(p2) + 1);
+            idn2_free(idn_name);
             fclose(f);
             return ARC_STAT_OK;
         }
     }
 
+    idn2_free(idn_name);
     fclose(f);
 
     return ARC_STAT_NOKEY;
