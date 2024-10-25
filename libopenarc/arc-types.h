@@ -121,6 +121,7 @@ struct arc_msghandle
     bool                 arc_infail;
     int                  arc_dnssec_key;
     int                  arc_signalg;
+    int                  arc_oldest_pass;
     unsigned int         arc_mode;
     unsigned int         arc_nsets;
     unsigned int         arc_margin;
@@ -158,9 +159,9 @@ struct arc_msghandle
     struct arc_dstring  *arc_hdrbuf;
     struct arc_canon    *arc_sealcanon;
     struct arc_canon   **arc_sealcanons;
-    struct arc_canon    *arc_valid_hdrcanon;
+    struct arc_canon   **arc_hdrcanons;
+    struct arc_canon   **arc_bodycanons;
     struct arc_canon    *arc_sign_hdrcanon;
-    struct arc_canon    *arc_valid_bodycanon;
     struct arc_canon    *arc_sign_bodycanon;
     struct arc_canon    *arc_canonhead;
     struct arc_canon    *arc_canontail;

@@ -122,11 +122,11 @@ def test_milter_staticmsg(run_miltertest):
         ['To', ' testrcpt@example.com'],
     ]
     res = run_miltertest(headers, False, 'test message\r\n')
-    assert res['headers'][0] == ['Authentication-Results', ' example.com; arc=pass smtp.remote-ip=127.0.0.1']
+    assert res['headers'][0] == ['Authentication-Results', ' example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1']
     assert res['headers'][1][0] == 'ARC-Seal'
     assert 'cv=pass' in res['headers'][1][1]
     assert res['headers'][2][0] == 'ARC-Message-Signature'
-    assert res['headers'][3] == ['ARC-Authentication-Results', ' i=2; example.com; arc=pass smtp.remote-ip=127.0.0.1']
+    assert res['headers'][3] == ['ARC-Authentication-Results', ' i=2; example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1']
 
 
 def test_milter_canon_simple(run_miltertest):
@@ -136,7 +136,7 @@ def test_milter_canon_simple(run_miltertest):
 
     res = run_miltertest(res['headers'])
     assert 'cv=pass' in res['headers'][0][1]
-    assert res['headers'][2] == ['ARC-Authentication-Results', ' i=2; example.com; arc=pass smtp.remote-ip=127.0.0.1']
+    assert res['headers'][2] == ['ARC-Authentication-Results', ' i=2; example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1']
 
 
 def test_milter_resign(run_miltertest):
@@ -148,10 +148,10 @@ def test_milter_resign(run_miltertest):
         headers = [*res['headers'], *headers]
         res = run_miltertest(headers)
 
-        assert res['headers'][0] == ['Authentication-Results', ' example.com; arc=pass smtp.remote-ip=127.0.0.1']
+        assert res['headers'][0] == ['Authentication-Results', ' example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1']
 
         if i <= 50:
-            assert res['headers'][3] == ['ARC-Authentication-Results', f' i={i}; example.com; arc=pass smtp.remote-ip=127.0.0.1']
+            assert res['headers'][3] == ['ARC-Authentication-Results', f' i={i}; example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1']
             assert 'cv=pass' in res['headers'][1][1]
 
             # quick and dirty parsing
@@ -174,7 +174,7 @@ def test_milter_mode_s(run_miltertest):
     res = run_miltertest(res['headers'])
     assert len(res['headers']) == 3
     assert 'cv=pass' in res['headers'][0][1]
-    assert res['headers'][2] == ['ARC-Authentication-Results', ' i=2; example.com; arc=pass smtp.remote-ip=127.0.0.1']
+    assert res['headers'][2] == ['ARC-Authentication-Results', ' i=2; example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1']
 
 
 def test_milter_mode_v(run_miltertest):
@@ -440,9 +440,9 @@ def test_milter_ar_override_disabled(run_miltertest):
 
     res = run_miltertest(headers)
 
-    assert res['headers'][0] == ['Authentication-Results', ' example.com; arc=pass smtp.remote-ip=127.0.0.1']
+    assert res['headers'][0] == ['Authentication-Results', ' example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1']
     assert 'cv=pass' in res['headers'][1][1]
-    assert res['headers'][3] == ['ARC-Authentication-Results', ' i=2; example.com; arc=pass smtp.remote-ip=127.0.0.1']
+    assert res['headers'][3] == ['ARC-Authentication-Results', ' i=2; example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1']
 
 
 def test_milter_ar_override_multi(run_miltertest):
@@ -456,7 +456,7 @@ def test_milter_ar_override_multi(run_miltertest):
     ]
     res = run_miltertest(headers)
 
-    assert res['headers'][0] == ['Authentication-Results', ' example.com; arc=pass smtp.remote-ip=127.0.0.1']
+    assert res['headers'][0] == ['Authentication-Results', ' example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1']
     assert 'cv=pass' in res['headers'][1][1]
     assert res['headers'][3] == ['ARC-Authentication-Results', ' i=2; example.com; arc=pass']
 
@@ -490,7 +490,26 @@ def test_milter_idna(run_miltertest):
 
     res = run_miltertest(res['headers'])
     assert 'cv=pass' in res['headers'][0][1]
-    assert res['headers'][2] == ['ARC-Authentication-Results', ' i=2; 시험.example.com; arc=pass smtp.remote-ip=127.0.0.1']
+    assert res['headers'][2] == ['ARC-Authentication-Results', ' i=2; 시험.example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1']
+
+
+def test_milter_oldest_pass(run_miltertest):
+    """oldest-pass points at the most recent message modification"""
+    res = run_miltertest()
+
+    headers = res['headers']
+    res = run_miltertest(headers, body='second test body\r\n')
+
+    # This doesn't have an oldest-pass because verification failed and was
+    # overridden by A-R. In this situation we could try to parse it from A-R,
+    # but currently that is not done.
+    assert res['headers'][3] == ['ARC-Authentication-Results', ' i=2; example.com; arc=pass smtp.remote-ip=127.0.0.1']
+
+    headers = [x for x in res['headers'] + headers if x[0] != 'Authentication-Results']
+
+    res = run_miltertest(headers, body='second test body\r\n')
+
+    assert res['headers'][3] == ['ARC-Authentication-Results', ' i=3; example.com; arc=pass header.oldest-pass=2 smtp.remote-ip=127.0.0.1']
 
 
 def test_milter_authresip(run_miltertest):

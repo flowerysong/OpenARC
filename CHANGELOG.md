@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
+- `oldest-pass` processing per [RFC 8617 section 5.2](https://datatracker.ietf.org/doc/html/rfc8617#section-5.2).
+- libopenarc - `arc_chain_oldest_pass()`
 - milter - `AuthResIP` configuration option.
 - milter - `RequireSafeKeys` configuration option.
 
@@ -22,6 +24,8 @@ All notable changes to this project will be documented in this file.
   are excluded from the AMS, as required by RFC 8617.
 - libopenarc - ARC headers are returned with a space before the header value.
 - libopenarc - String arguments are marked as `const` where applicable.
+- milter - `Authentication-Results` and `ARC-Authentication-Results` include
+  `header.oldest-pass` when appropriate.
 
 ### Fixed
 - libopenarc - Seals on failed chains only cover the latest ARC header set,
@@ -32,6 +36,8 @@ All notable changes to this project will be documented in this file.
 - libopenarc - The installed pkg-config file is more correct.
 - libopenarc - U-labels (domain labels encoded as UTF-8) are allowed in `d=`
   and `s=` tags.
+- libopenarc - `arc_eom()` propagates internal errors like memory allocation
+  failure instead of marking the chain as failed.
 - milter - Use after free.
 - milter - Unlikely division by zero.
 - milter - Small memory leak during config loading.

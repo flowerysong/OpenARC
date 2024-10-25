@@ -610,6 +610,12 @@ extern int arc_chain_custody_str(ARC_MESSAGE   *msg,
                                  size_t         buflen);
 
 /*
+**  ARC_CHAIN_OLDEST_PASS -- retrieve the oldest-pass value
+*/
+
+extern int arc_chain_oldest_pass(ARC_MESSAGE *);
+
+/*
 **  ARC_MAIL_PARSE -- extract the local-part and domain-name from a structured
 **                    header field
 **

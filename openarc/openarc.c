@@ -3671,6 +3671,28 @@ reconcile_arc_state(msgctx afc, struct result *r)
     return initial_cv != new_cv;
 }
 
+/* helper function to generate the arc authentication result for AR and AAR */
+static void
+add_arc_authres(msgctx afc, struct arcf_config *conf, const char *ip)
+{
+    arc_dstring_printf(afc->mctx_tmpstr, "arc=%s",
+                       arc_chain_status_str(afc->mctx_arcmsg));
+
+    if (arc_chain_oldest_pass(afc->mctx_arcmsg) >= 0)
+    {
+        arc_dstring_printf(afc->mctx_tmpstr, " header.oldest-pass=%d",
+                           arc_chain_oldest_pass(afc->mctx_arcmsg));
+    }
+
+    if (conf->conf_authresip && ip[0] != '\0')
+    {
+        bool quote = !ares_istoken(ip);
+
+        arc_dstring_printf(afc->mctx_tmpstr, " smtp.remote-ip=%s%s%s",
+                           quote ? "\"" : "", ip, quote ? "\"" : "");
+    }
+}
+
 /*
 **  MLFI_EOM -- handler called at the end of the message; we can now decide
 **              based on the configuration if and how to add the text
@@ -3860,21 +3882,11 @@ mlfi_eom(SMFICTX *ctx)
 
         if (!arfound)
         {
-            /* Record the ARC status */
             if (arc_dstring_len(afc->mctx_tmpstr) > 0)
             {
                 arc_dstring_cat(afc->mctx_tmpstr, ";\n\t");
             }
-
-            arc_dstring_printf(afc->mctx_tmpstr, "arc=%s",
-                               arc_chain_status_str(afc->mctx_arcmsg));
-
-            if (conf->conf_authresip && ipbuf[0] != '\0')
-            {
-                _Bool quote = !ares_istoken(ipbuf);
-                arc_dstring_printf(afc->mctx_tmpstr, " smtp.remote-ip=%s%s%s",
-                                   quote ? "\"" : "", ipbuf, quote ? "\"" : "");
-            }
+            add_arc_authres(afc, conf, ipbuf);
         }
 
         /*
@@ -3952,17 +3964,11 @@ mlfi_eom(SMFICTX *ctx)
         }
 
         arc_dstring_blank(afc->mctx_tmpstr);
-        arc_dstring_printf(afc->mctx_tmpstr, "%s%s; arc=%s",
-                           cc->cctx_noleadspc ? " " : "", conf->conf_authservid,
-                           arc_chain_status_str(afc->mctx_arcmsg));
+        arc_dstring_printf(afc->mctx_tmpstr, "%s%s; ",
+                           cc->cctx_noleadspc ? " " : "",
+                           conf->conf_authservid);
 
-        if (conf->conf_authresip && ipbuf[0] != '\0')
-        {
-            _Bool quote = !ares_istoken(ipbuf);
-
-            arc_dstring_printf(afc->mctx_tmpstr, " smtp.remote-ip=%s%s%s",
-                               quote ? "\"" : "", ipbuf, quote ? "\"" : "");
-        }
+        add_arc_authres(afc, conf, ipbuf);
 
         if (conf->conf_finalreceiver && arcchainlen > 0)
         {

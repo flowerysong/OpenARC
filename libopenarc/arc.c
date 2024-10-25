@@ -2280,7 +2280,7 @@ arc_validate_msg(ARC_MESSAGE *msg, unsigned int setnum)
     }
 
     /* extract the header and body hashes from the message */
-    status = arc_canon_gethashes(msg, &hh, &hhlen, &bh, &bhlen);
+    status = arc_canon_gethashes(msg, setnum, &hh, &hhlen, &bh, &bhlen);
     if (status != ARC_STAT_OK)
     {
         arc_error(msg, "arc_canon_gethashes() failed");
@@ -2763,9 +2763,10 @@ arc_eoh_verify(ARC_MESSAGE *msg)
 {
     unsigned int         n;
     unsigned int         hashtype;
+    char                *c;
     ARC_STAT             status;
-    struct arc_hdrfield *h;
-    char                *htag;
+    struct arc_hdrfield *h = NULL;
+    char                *htag = NULL;
     arc_canon_t          hdr_canon;
     arc_canon_t          body_canon;
 
@@ -2775,18 +2776,51 @@ arc_eoh_verify(ARC_MESSAGE *msg)
         return ARC_STAT_OK;
     }
 
+    if (msg->arc_nsets == 0)
+    {
+        return ARC_STAT_OK;
+    }
+
     /*
     **  Request specific canonicalizations we want to run.
     */
 
-    h = NULL;
-    htag = NULL;
-    if (msg->arc_nsets > 0)
-    {
-        char *c;
+    /* sets already in the chain, validation */
+    msg->arc_sealcanons = ARC_MALLOC(msg->arc_nsets * sizeof(ARC_CANON *));
+    msg->arc_hdrcanons = ARC_MALLOC(msg->arc_nsets * sizeof(ARC_CANON *));
+    msg->arc_bodycanons = ARC_MALLOC(msg->arc_nsets * sizeof(ARC_CANON *));
 
-        /* headers, validation */
-        h = msg->arc_sets[msg->arc_nsets - 1].arcset_ams;
+    if (msg->arc_sealcanons == NULL || msg->arc_hdrcanons == NULL ||
+        msg->arc_bodycanons == NULL)
+    {
+        arc_error(msg, "failed to allocate memory for canonicalizations");
+        return ARC_STAT_INTERNAL;
+    }
+
+    for (n = 0; n < msg->arc_nsets; n++)
+    {
+        h = msg->arc_sets[n].arcset_as;
+
+        if (strcmp(arc_param_get(h->hdr_data, "a"), "rsa-sha1") == 0)
+        {
+            hashtype = ARC_HASHTYPE_SHA1;
+        }
+        else
+        {
+            hashtype = ARC_HASHTYPE_SHA256;
+        }
+
+        status = arc_add_canon(msg, ARC_CANONTYPE_SEAL, ARC_CANON_RELAXED,
+                               hashtype, NULL, h, (ssize_t) -1,
+                               &msg->arc_sealcanons[n]);
+        if (status != ARC_STAT_OK)
+        {
+            arc_error(msg, "failed to initialize seal canonicalization object");
+            return status;
+        }
+
+        /* AMS */
+        h = msg->arc_sets[n].arcset_ams;
         htag = arc_param_get(h->hdr_data, "h");
         if (strcmp(arc_param_get(h->hdr_data, "a"), "rsa-sha1") == 0)
         {
@@ -2817,7 +2851,7 @@ arc_eoh_verify(ARC_MESSAGE *msg)
         }
 
         status = arc_add_canon(msg, ARC_CANONTYPE_HEADER, hdr_canon, hashtype,
-                               htag, h, (ssize_t) -1, &msg->arc_valid_hdrcanon);
+                               htag, h, (ssize_t) -1, &msg->arc_hdrcanons[n]);
 
         if (status != ARC_STAT_OK)
         {
@@ -2829,48 +2863,12 @@ arc_eoh_verify(ARC_MESSAGE *msg)
         /* body, validation */
         status = arc_add_canon(msg, ARC_CANONTYPE_BODY, body_canon, hashtype,
                                NULL, NULL, (ssize_t) -1,
-                               &msg->arc_valid_bodycanon);
+                               &msg->arc_bodycanons[n]);
 
         if (status != ARC_STAT_OK)
         {
             arc_error(msg, "failed to initialize body canonicalization object");
             return status;
-        }
-    }
-
-    /* sets already in the chain, validation */
-    if (msg->arc_nsets > 0)
-    {
-        msg->arc_sealcanons = ARC_MALLOC(msg->arc_nsets * sizeof(ARC_CANON *));
-        if (msg->arc_sealcanons == NULL)
-        {
-            arc_error(msg, "failed to allocate memory for canonicalizations");
-            return status;
-        }
-
-        for (n = 0; n < msg->arc_nsets; n++)
-        {
-            h = msg->arc_sets[n].arcset_as;
-
-            int hashtype;
-            if (strcmp(arc_param_get(h->hdr_data, "a"), "rsa-sha1") == 0)
-            {
-                hashtype = ARC_HASHTYPE_SHA1;
-            }
-            else
-            {
-                hashtype = ARC_HASHTYPE_SHA256;
-            }
-
-            status = arc_add_canon(msg, ARC_CANONTYPE_SEAL, ARC_CANON_RELAXED,
-                                   hashtype, NULL, h, (ssize_t) -1,
-                                   &msg->arc_sealcanons[n]);
-            if (status != ARC_STAT_OK)
-            {
-                arc_error(msg,
-                          "failed to initialize seal canonicalization object");
-                return status;
-            }
         }
     }
 
@@ -3162,11 +3160,6 @@ arc_body(ARC_MESSAGE *msg, const unsigned char *buf, size_t len)
     assert(msg != NULL);
     assert(buf != NULL);
 
-    if (msg->arc_state == ARC_CHAIN_FAIL)
-    {
-        return ARC_STAT_OK;
-    }
-
     if (msg->arc_state > ARC_STATE_BODY || msg->arc_state < ARC_STATE_EOH)
     {
         return ARC_STAT_INVALID;
@@ -3189,8 +3182,10 @@ arc_body(ARC_MESSAGE *msg, const unsigned char *buf, size_t len)
 ARC_STAT
 arc_eom(ARC_MESSAGE *msg)
 {
+    ARC_STAT status;
+
     /* nothing to do if the chain has been expressly failed */
-    if (msg->arc_state == ARC_CHAIN_FAIL)
+    if (msg->arc_cstate == ARC_CHAIN_FAIL)
     {
         return ARC_STAT_OK;
     }
@@ -3202,55 +3197,71 @@ arc_eom(ARC_MESSAGE *msg)
     if (msg->arc_nsets == 0)
     {
         msg->arc_cstate = ARC_CHAIN_NONE;
+        return ARC_STAT_OK;
     }
-    else if (msg->arc_cstate != ARC_CHAIN_FAIL)
+
+    /* validate the final ARC-Message-Signature */
+    status = arc_validate_msg(msg, msg->arc_nsets);
+    if (status == ARC_STAT_INTERNAL)
     {
-        /* validate the final ARC-Message-Signature */
-        if (arc_validate_msg(msg, msg->arc_nsets) != ARC_STAT_OK)
+        return status;
+    }
+    if (status != ARC_STAT_OK)
+    {
+        msg->arc_cstate = ARC_CHAIN_FAIL;
+        return ARC_STAT_OK;
+    }
+
+    /* determine the oldest-pass value */
+    for (int i = msg->arc_nsets - 1; i > 0; i--)
+    {
+        if (arc_validate_msg(msg, i) != ARC_STAT_OK)
+        {
+            msg->arc_oldest_pass = i + 1;
+            break;
+        }
+        if (i == 1)
+        {
+            /* everything passed */
+            msg->arc_oldest_pass = 0;
+        }
+    }
+
+    /* validate each ARC-Seal */
+    msg->arc_cstate = ARC_CHAIN_PASS;
+    for (int i = msg->arc_nsets; i > 0; i--)
+    {
+        char      *cv;
+        ARC_KVSET *kvset;
+
+        for (kvset = arc_set_first(msg, ARC_KVSETTYPE_SEAL); kvset != NULL;
+             kvset = arc_set_next(kvset, ARC_KVSETTYPE_SEAL))
+        {
+            if (atoi(arc_param_get(kvset, "i")) == i)
+            {
+                break;
+            }
+        }
+
+        cv = arc_param_get(kvset, "cv");
+        if (!((i == 1 && strcasecmp(cv, "none") == 0) ||
+              (i != 1 && strcasecmp(cv, "pass") == 0)))
+        {
+            /* the chain has already failed */
+            msg->arc_cstate = ARC_CHAIN_FAIL;
+            msg->arc_infail = true;
+            return ARC_STAT_OK;
+        }
+
+        status = arc_validate_seal(msg, i);
+        if (status == ARC_STAT_INTERNAL)
+        {
+            return status;
+        }
+        if (status != ARC_STAT_OK)
         {
             msg->arc_cstate = ARC_CHAIN_FAIL;
-        }
-        else
-        {
-            unsigned int set;
-            char        *inst;
-            char        *cv;
-            ARC_KVSET   *kvset;
-
-            msg->arc_cstate = ARC_CHAIN_PASS;
-            for (set = msg->arc_nsets; set > 0; set--)
-            {
-                for (kvset = arc_set_first(msg, ARC_KVSETTYPE_SEAL);
-                     kvset != NULL;
-                     kvset = arc_set_next(kvset, ARC_KVSETTYPE_SEAL))
-                {
-                    inst = arc_param_get(kvset, "i");
-                    if (atoi(inst) == set)
-                    {
-                        break;
-                    }
-                }
-
-                cv = arc_param_get(kvset, "cv");
-                if (!((set == 1 && strcasecmp(cv, "none") == 0) ||
-                      (set != 1 && strcasecmp(cv, "pass") == 0)))
-                {
-                    /* the chain has already failed */
-                    msg->arc_cstate = ARC_CHAIN_FAIL;
-
-                    /* note that it failed inbound */
-                    msg->arc_infail = true;
-
-                    break;
-                }
-
-                if (msg->arc_cstate != ARC_CHAIN_FAIL &&
-                    arc_validate_seal(msg, set) != ARC_STAT_OK)
-                {
-                    msg->arc_cstate = ARC_CHAIN_FAIL;
-                    break;
-                }
-            }
+            return ARC_STAT_OK;
         }
     }
 
@@ -3284,6 +3295,11 @@ arc_set_cv(ARC_MESSAGE *msg, ARC_CHAIN cv)
     /* only update the state if it's not a hard failure */
     if (!msg->arc_infail)
     {
+        if (msg->arc_cstate != cv)
+        {
+            /* there's no way of knowing. */
+            msg->arc_oldest_pass = -1;
+        }
         msg->arc_cstate = cv;
     }
 }
@@ -3940,4 +3956,25 @@ arc_chain_custody_str(ARC_MESSAGE *msg, unsigned char *buf, size_t buflen)
     arc_dstring_free(tmpbuf);
 
     return appendlen;
+}
+
+/*
+**  ARC_CHAIN_OLDEST_PASS -- retrieve the oldest-pass value
+**
+**  Parameters:
+**      msg -- ARC_MESSAGE object
+**
+**  Return value:
+**      The lowest instance value where the AMS signature passed verification,
+**      `0` if all signatures passed, or `-1` for unknown.
+*/
+
+int
+arc_chain_oldest_pass(ARC_MESSAGE *msg)
+{
+    if (msg->arc_cstate == ARC_CHAIN_PASS)
+    {
+        return msg->arc_oldest_pass;
+    }
+    return -1;
 }

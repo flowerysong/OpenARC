@@ -684,12 +684,16 @@ arc_add_canon(ARC_MESSAGE         *msg,
 
     assert(hashtype == ARC_HASHTYPE_SHA1 || hashtype == ARC_HASHTYPE_SHA256);
 
-    if (type == ARC_CANONTYPE_HEADER)
+    /* Body canons can be shared if the parameters match. Header canons could
+     * theoretically be partially shared if the `h` tags match, but it would be
+     * complex so we don't currently do it. */
+    if (type == ARC_CANONTYPE_BODY)
     {
         for (cur = msg->arc_canonhead; cur != NULL; cur = cur->canon_next)
         {
-            if (cur->canon_type != ARC_CANONTYPE_HEADER ||
-                cur->canon_hashtype != hashtype || cur->canon_length != length)
+            if (cur->canon_type != ARC_CANONTYPE_BODY ||
+                cur->canon_canon != canon || cur->canon_hashtype != hashtype ||
+                cur->canon_length != length)
             {
                 continue;
             }
@@ -1947,6 +1951,7 @@ arc_canon_getsealhash(ARC_MESSAGE *msg, int setnum, void **sh, size_t *shlen)
 **
 **  Parameters:
 **  	msg -- ARC message from which to get completed hashes
+**      setnum -- which seal's hashes to get
 **  	hh -- pointer to header hash buffer (returned)
 **  	hhlen -- bytes used at hh (returned)
 **  	bh -- pointer to body hash buffer (returned)
@@ -1958,8 +1963,12 @@ arc_canon_getsealhash(ARC_MESSAGE *msg, int setnum, void **sh, size_t *shlen)
 */
 
 ARC_STAT
-arc_canon_gethashes(
-    ARC_MESSAGE *msg, void **hh, size_t *hhlen, void **bh, size_t *bhlen)
+arc_canon_gethashes(ARC_MESSAGE *msg,
+                    int          setnum,
+                    void       **hh,
+                    size_t      *hhlen,
+                    void       **bh,
+                    size_t      *bhlen)
 {
     ARC_STAT          status;
     struct arc_canon *hdc;
@@ -1969,8 +1978,8 @@ arc_canon_gethashes(
     size_t            hdlen;
     size_t            bdlen;
 
-    hdc = msg->arc_valid_hdrcanon;
-    bdc = msg->arc_valid_bodycanon;
+    hdc = msg->arc_hdrcanons[setnum - 1];
+    bdc = msg->arc_bodycanons[setnum - 1];
 
     status = arc_canon_getfinal(hdc, &hd, &hdlen);
     if (status != ARC_STAT_OK)

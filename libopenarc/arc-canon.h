@@ -41,7 +41,7 @@ extern void     arc_canon_cleanup(ARC_MESSAGE *);
 extern ARC_STAT arc_canon_closebody(ARC_MESSAGE *);
 extern ARC_STAT arc_canon_getfinal(ARC_CANON *, unsigned char **, size_t *);
 extern ARC_STAT arc_canon_gethashes(
-    ARC_MESSAGE *, void **, size_t *, void **, size_t *);
+    ARC_MESSAGE *, int, void **, size_t *, void **, size_t *);
 extern ARC_STAT arc_canon_getsealhash(ARC_MESSAGE *, int, void **, size_t *);
 extern ARC_STAT arc_canon_header_string(
     struct arc_dstring *, arc_canon_t, const char *, size_t, bool);
