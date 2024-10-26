@@ -17,6 +17,9 @@ All notable changes to this project will be documented in this file.
 - Custom Jansson locations must be configured using `LIBJANSSON_CFLAGS`
   and `LIBJANSSON_LIBS` environment variables instead of passing
   `--with-libjansson=/path` to `configure`.
+- Custom libmilter locations must be configured using `LIBMILTER_CPPFLAGS`
+  and `LIBMILTER_LDFLAGS` environment variables instead of passing
+  `--with-milter=/path` to `configure`.
 - Building the milter defaults to requiring Jansson. You can explicitly
   disable it by passing `--without-libjansson` to `configure`.
 - Libidn2 is now required to build OpenARC.

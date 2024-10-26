@@ -327,123 +327,46 @@ AC_SUBST(LIBIDN2_LIBS)
 #
 # libmilter
 #
-AC_MSG_CHECKING([for milter library and includes])
-AC_ARG_WITH([milter],
-            AS_HELP_STRING([--with-milter],
-                           [location of milter includes and library]),
-            [milterpath="$withval"], [milterpath="auto"])
 
-if test x"$enable_filter" = x"no"
-then
-	milterpath="no"
-fi
+AC_ARG_VAR([LIBMILTER_CPPFLAGS], [C preprocessor flags for libmilter headers])
+AC_ARG_VAR([LIBMILTER_LDFLAGS], [linker flags for libmilter library])
 
-if test "$milterpath" = "auto" -o "$milterpath" = "yes"
-then
-	milterdirs="/usr/local /opt/local /usr"
-	for d in $milterdirs
-	do
-		if test -f $d/include/libmilter/mfapi.h
-		then
-			milterpath=$d
-			break
-		fi
-	done
-fi
-case "$milterpath" in
-	no)
-		if test x"$enable_filter" = x"yes"
-		then
-			AC_MSG_ERROR([milter is required])
-		fi
-		AC_MSG_RESULT(disabled)
-		;;
-	auto)
-		AC_MSG_ERROR([milter not found])
-		;;
-	*/*)
-		if ! test -f $milterpath/include/libmilter/mfapi.h
-		then
-			AC_MSG_ERROR([milter includes not found at $milterpath])
-		fi
-		AC_MSG_RESULT([$milterpath])
-		;;
-	*)
-		AC_MSG_ERROR([milter not found])
-		;;
-esac
+AS_IF([test "x$enable_filter" != xno], [
+    saved_CPPFLAGS="$CPPFLAGS"
+    saved_LDFLAGS="$LDFLAGS"
+    saved_LIBS="$LIBS"
 
-LIBMILTER_INCDIRS=""
-LIBMILTER_LIBDIRS=""
-LIBMILTER_LIBS=""
+    AS_IF([test "x$LIBMILTER_CPPFLAGS" != x], [CPPFLAGS="$CPPFLAGS $LIBMILTER_CPPFLAGS"])
+    AS_IF([test "x$LIBMILTER_LDFLAGS" != x], [LDFLAGS="$LDFLAGS $LIBMILTER_LDFLAGS"])
 
-if test x"$milterpath" != x"no"
-then
-	LIBMILTER_INCDIRS="-I$milterpath/include"
+    AC_CHECK_HEADER([libmilter/mfapi.h],
+        [AC_CHECK_LIB([milter], [smfi_register], [], [AC_MSG_ERROR([Unable to find libmilter])])],
+        [AC_MSG_ERROR([Unable to find libmilter includes])])
 
-	saved_CC="$CC"
-	saved_CFLAGS="$CFLAGS"
-	saved_CPPFLAGS="$CPPFLAGS"
-	saved_LDFLAGS="$LDFLAGS"
-	saved_LIBS="$LIBS"
+    AC_CHECK_FUNC([smfi_insheader],
+        AC_DEFINE([HAVE_SMFI_INSHEADER], 1, [Define if libmilter has smfi_insheader()]))
 
-	CC="$PTHREAD_CC"
-	LIBS="$outer_LIBS $PTHREAD_LIBS $saved_LIBS"
-	CPPFLAGS="$LIBMILTER_INCDIRS $saved_CPPFLAGS"
-	CFLAGS="$PTHREAD_CFLAGS $saved_CFLAGS"
-	LDFLAGS="$outer_LDFLAGS $PTHREAD_CFLAGS $saved_LDFLAGS"
+    AC_CHECK_FUNC([smfi_opensocket],
+        AC_DEFINE([HAVE_SMFI_OPENSOCKET], 1, [Define if libmilter has smfi_opensocket()]))
 
-	breakloop="no"
-	for d in lib lib64 lib/libmilter
-	do
-		unset ac_cv_search_smfi_register
-		LDFLAGS="$outer_LDFLAGS $PTHREAD_CFLAGS -L$milterpath/$d $saved_LDFLAGS"
-		AC_SEARCH_LIBS([smfi_register], [milter],
-		               [
-		               	LIBMILTER_LIBDIRS="-L$milterpath/$d"
-		               	LIBMILTER_LIBS="-lmilter"
-		               	breakloop="yes"
-		               ])
+    AC_CHECK_FUNC([smfi_progress],
+        AC_DEFINE([HAVE_SMFI_PROGRESS], 1, [Define if libmilter has smfi_progress()]))
 
-		AC_CHECK_FUNC([smfi_insheader],
-			      AC_DEFINE([HAVE_SMFI_INSHEADER], 1,
-					[Define if libmilter has smfi_insheader()]))
+    AC_CHECK_FUNC([smfi_setsymlist],
+        AC_DEFINE([HAVE_SMFI_SETSYMLIST], 1, [Define if libmilter has smfi_setsymlist()]))
 
-		AC_CHECK_FUNC([smfi_opensocket],
-			      AC_DEFINE([HAVE_SMFI_OPENSOCKET], 1,
-					[Define if libmilter has smfi_opensocket()]))
+    AC_CHECK_FUNC([smfi_version],
+        AC_DEFINE([HAVE_SMFI_VERSION], 1, [Define if libmilter has smfi_version()]))
 
-		AC_CHECK_FUNC([smfi_progress],
-			      AC_DEFINE([HAVE_SMFI_PROGRESS], 1,
-					[Define if libmilter has smfi_progress()]))
+    CPPFLAGS="$saved_CPPFLAGS"
+    LDFLAGS="$saved_LDFLAGS"
+    LIBS="$saved_LIBS"
 
-		AC_CHECK_FUNC([smfi_setsymlist],
-			      AC_DEFINE([HAVE_SMFI_SETSYMLIST], 1,
-					[Define if libmilter has smfi_setsymlist()]))
+    LIBMILTER_LIBS='-lmilter'
+])
 
-		AC_CHECK_FUNC([smfi_version],
-			      AC_DEFINE([HAVE_SMFI_VERSION], 1,
-					[Define if libmilter has smfi_version()]))
-
-		if test x"$breakloop" = x"yes"
-		then
-			break
-		fi
-	done
-	if test x"$LIBMILTER_LIBDIRS" = x""
-	then
-		AC_MSG_ERROR([libmilter not found])
-	fi
-
-	CC="$saved_CC"
-	CPPFLAGS="$saved_CPPFLAGS"
-	CFLAGS="$saved_CFLAGS"
-	LDFLAGS="$saved_LDFLAGS"
-	LIBS="$saved_LIBS"
-fi
-
-AC_SUBST(LIBMILTER_INCDIRS)
-AC_SUBST(LIBMILTER_LIBDIRS)
+AC_SUBST(LIBMILTER_CPPFLAGS)
+AC_SUBST(LIBMILTER_LDFLAGS)
 AC_SUBST(LIBMILTER_LIBS)
 
 #

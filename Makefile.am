@@ -88,8 +88,8 @@ openarc_openarc_SOURCES = \
 	util/arc-dstring.h
 openarc_openarc_CC = $(PTHREAD_CC)
 openarc_openarc_CFLAGS = $(PTHREAD_CFLAGS)
-openarc_openarc_CPPFLAGS = -I$(srcdir)/libopenarc -I$(srcdir)/util $(OPENSSL_CFLAGS) $(LIBIDN2_CFLAGS) $(LIBMILTER_INCDIRS) $(LIBJANSSON_CFLAGS)
-openarc_openarc_LDFLAGS = $(LIBMILTER_LIBDIRS) $(PTHREAD_CFLAGS)
+openarc_openarc_CPPFLAGS = -I$(srcdir)/libopenarc -I$(srcdir)/util $(OPENSSL_CFLAGS) $(LIBIDN2_CFLAGS) $(LIBMILTER_CPPFLAGS) $(LIBJANSSON_CFLAGS)
+openarc_openarc_LDFLAGS = $(LIBMILTER_LDFLAGS) $(PTHREAD_CFLAGS)
 openarc_openarc_LDADD = libopenarc/libopenarc.la $(LIBMILTER_LIBS) $(OPENSSL_LIBS) $(LIBIDN2_LIBS) $(PTHREAD_LIBS) $(LIBJANSSON_LIBS) $(LIBRESOLV)
 endif
 
