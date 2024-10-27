@@ -31,8 +31,11 @@ not included in the output.
 (\-\-bits=n)
 Specifies the size of the key, in
 .I bits,
-to be generated.  The default is 1024 which is the value recommended by
-the related DKIM specification.
+to be generated.  The upstream default is 1024, but here the default
+is 2048 based on more current recommendations such as those from NIST 800-177.
+RFC8463 recommends Ed25519-SHA256, but it is not clear that all major email
+providers have adopted this yet.
+
 
 .TP
 .I \-d domain
@@ -58,7 +61,8 @@ generate a ed25519 key.
 (\-\-hash-algorithms=name[:name[...]])
 Specifies a list of hash
 .I algorithms
-which can be used with this key.  By default all hash algorithms are allowed.
+which can be used with this key.  Upstream, by default all hash algorithms are
+allowed, but here this is restricted to sha256 based on NIST 800-177.
 
 .TP
 .I \-\-help
@@ -119,8 +123,6 @@ This man page covers the version of
 that shipped with version @VERSION@ of
 .I OpenARC.
 .SH COPYRIGHT
-Copyright (c) 2024 Edmund Lodewijks. All rights reserved.
-
 This software is based on opendkim-genkey, which has the following
 copyrights:
 
