@@ -67,8 +67,9 @@ libopenarc/symbols.map: $(libopenarc_libopenarc_include_HEADERS)
 
 if BUILD_FILTER
 dist_doc_DATA += openarc/openarc.conf.sample
-man_MANS = openarc/openarc.conf.5 openarc/openarc.8
+man_MANS = openarc/openarc.conf.5 openarc/openarc.8 openarc/openarc-genkey.8
 sbin_PROGRAMS = openarc/openarc
+dist_sbin_SCRIPTS = openarc/openarc-genkey
 
 openarc_openarc_SOURCES = \
 	openarc/config.c \
