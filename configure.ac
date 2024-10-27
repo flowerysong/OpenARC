@@ -422,7 +422,7 @@ AC_CONFIG_FILES([
     libopenarc/openarc.pc
     openarc/openarc.8
     openarc/openarc.conf.5
-    openarc/opendkim-genkey
+    openarc/openarc-genkey
     openarc/openarc-genkey.8
     test/Makefile
 ])
