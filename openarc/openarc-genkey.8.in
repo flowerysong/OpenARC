@@ -16,6 +16,11 @@ The filenames of these are based on the selector (see below) and the domain;
 the private key will have a suffix of ".key" and the TXT record
 will have a suffix of ".txt".
 
+It is recommended to run openarc-genkey as user openarc to have
+correct file permissions:
+
+sudo openarc openarc-genkey ...
+
 Both long and short names are supported for most options.
 .SH OPTIONS
 .TP
@@ -122,6 +127,9 @@ This man page covers the version of
 .I openarc-genkey
 that shipped with version @VERSION@ of
 .I OpenARC.
+.SH EXAMPLES
+An example:
+.I sudo --user openarc openarc-genkey --directory=/etc/openarc/keys --domain=yourdomain.org --selector=20241007
 .SH COPYRIGHT
 This software is based on opendkim-genkey, which has the following
 copyrights:
