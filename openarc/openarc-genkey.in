@@ -9,11 +9,15 @@
 ##
 ## openarc-genkey -- generate a key and/or TXT record for ARC service
 ##
-## The output of this script includes two files based on the
+## The output of this script includes three files based on the
 ## selector name:
 ##
 ## 	<selector>.domain.key		PEM-formatted private key, for use by
 ## 					openarc when signing messages
+##
+## 	<selector>.domain.pub		The public key, extracted from the
+## 					private key. This can be used for your
+##					DNS record.
 ##
 ## 	<selector>.domain.txt		A DNS TXT record suitable for insertion
 ## 					into or inclusion by a DNS zone file
@@ -31,13 +35,15 @@ use Getopt::Long;
 ##
 
 my $ed25519;
-my $bits = 1024;
+# Patched to set default to 2048 based on 2016 NIST recommendations:
+my $bits = 2048;
 my $domain = "@DOMAIN@";
 my $version = "@DOMAIN@";
 my $outdir = ".";
 my $nosubdomains = 0;
 my $subdomains = 1;
-my $hashalgs;
+# Patched to use sha256 only based on 2016 NIST recommendations:
+my $hashalgs = "sha256";
 my $note;
 my $flags = "";
 my $selector = "default";
