@@ -394,6 +394,27 @@ AC_DEFINE_UNQUOTED([LIBOPENARC_FEATURE_STRING], "$LIBOPENARC_FEATURE_STRING",
                    [Feature string for printing])
 
 #
+# Determine domainname for sample configs
+#
+AC_ARG_WITH([domain],
+            AS_HELP_STRING([--with-domain],
+                           [name of the domain for signing - sets this in sample configuration files]),
+            [
+                 DOMAIN="$withval"
+	    ],[
+                 AC_PATH_PROG(domainname, domainname)
+	         AS_IF([test x"$domainname" != x""],
+	         	[DOMAIN=`$domainname`],
+		 )
+		 AS_IF([test x"$DOMAIN" = x"" -o x"$DOMAIN" = x"(none)" ],
+	         		[DOMAIN=example.com]
+		 )
+	    ]
+	    )
+
+AC_SUBST([DOMAIN])
+
+#
 # final command line tweaks
 #
 
