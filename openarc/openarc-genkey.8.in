@@ -1,0 +1,136 @@
+.TH openarc-genkey 8 "The Trusted Domain Project"
+.SH NAME
+.B openarc-genkey
+\- ARC filter key generation tool
+.SH SYNOPSIS
+.B openarc-genkey
+[options]
+.SH DESCRIPTION
+.B openarc-genkey
+generates (1) a private key for signing messages using
+.I openarc(8)
+and (2) a DNS TXT record suitable for inclusion in a zone file which
+publishes the matching public key for use by remote ARC verifiers.
+
+The filenames of these are based on the selector (see below) and the domain;
+the private key will have a suffix of ".key" and the TXT record
+will have a suffix of ".txt".
+
+Both long and short names are supported for most options.
+.SH OPTIONS
+.TP
+.I \-a
+(\-\-append-domain)
+Appends the domain name (see \-d below) to the label in the generated
+TXT record, followed by a trailing period.  By default it is assumed the
+domain name is implicit from the context of the zone file, and is therefore
+not included in the output.
+
+.TP
+.I \-b bits
+(\-\-bits=n)
+Specifies the size of the key, in
+.I bits,
+to be generated.  The default is 1024 which is the value recommended by
+the related DKIM specification.
+
+.TP
+.I \-d domain
+(\-\-domain=string)
+Names the
+.I domain
+which will use this key for signing.  Currently only used in a comment in
+the TXT record file.  The default is "@DOMAIN@".
+
+.TP
+.I \-D directory
+(\-\-directory=path)
+Instructs the tool to change to the named
+.I directory
+prior to creating files.  By default the current directory is used.
+
+.TP
+.I \-\-ed25519
+generate a ed25519 key.
+
+.TP
+.I \-h algorithms
+(\-\-hash-algorithms=name[:name[...]])
+Specifies a list of hash
+.I algorithms
+which can be used with this key.  By default all hash algorithms are allowed.
+
+.TP
+.I \-\-help
+Print a help message and exit.
+
+.TP
+.I \-n note
+(\-\-note=string)
+Includes arbitrary
+.I note
+text in the key record.  By default, no such text is included.
+
+.TP
+.I \-r
+(\-\-restrict)
+Restricts the key for use in e-mail signing only.  The default is to allow
+the key to be used for any service.
+
+.TP
+.I \-s selector
+(\-\-selector=name)
+Specifies the
+.I selector,
+or name, of the key pair generated.  The default is "default".
+
+.TP
+.I \-S
+(\-\-[no]subdomains)
+Disallows subdomain signing by this key.  By default the key record will be
+generated such that verifiers are told subdomain signing is permitted.  Note
+that for backward compatibility reasons,
+.I \-S
+means the same as
+.I \-\-nosubdomains.
+
+.TP
+.I \-t
+(\-\-[no]testmode)
+Indicates the generated key record should be tagged such that verifiers are
+aware ARC is in test at the signing domain.
+
+.TP
+.I -v
+(\-\-verbose)
+Increase verbose output.
+
+.TP
+.I -V
+(\-\-version)
+Print version number and exit.
+.SH NOTES
+Requires that the
+.I openssl(8)
+binary be installed and in the executing shell's search path.
+.SH VERSION
+This man page covers the version of
+.I openarc-genkey
+that shipped with version @VERSION@ of
+.I OpenARC.
+.SH COPYRIGHT
+Copyright (c) 2024 Edmund Lodewijks. All rights reserved.
+
+This software is based on opendkim-genkey, which has the following
+copyrights:
+
+Copyright (c) 2007, 2008 Sendmail, Inc. and its suppliers.  All rights
+reserved.
+
+Copyright (c) 2009, 2011-2013, The Trusted Domain Project.
+All rightsi reserved.
+.SH SEE ALSO
+.I openarc(8),
+.I openssl(8)
+.P
+RFC8617 - Experimental RFC on The Authenticated Receive Chain (ARC) Protocol

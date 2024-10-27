@@ -1,0 +1,342 @@
+#!/usr/bin/perl
+##
+## Copyright (c) 2005-2008 Sendmail, Inc. and its suppliers.
+## All rights reserved.
+##
+## Copyright (c) 2009-2013, The Trusted Domain Project.  All rights reserved.
+##
+## Copyright (c) 2024 Edmund Lodewijks. All rights reserved.
+##
+## openarc-genkey -- generate a key and/or TXT record for ARC service
+##
+## The output of this script includes two files based on the
+## selector name:
+##
+## 	<selector>.domain.key		PEM-formatted private key, for use by
+## 					openarc when signing messages
+##
+## 	<selector>.domain.txt		A DNS TXT record suitable for insertion
+## 					into or inclusion by a DNS zone file
+## 					in order to publish the public key
+## 					for retrieval by verifiers
+
+use strict;
+use warnings;
+
+use File::Basename;
+use Getopt::Long;
+
+##
+## Set up defaults
+##
+
+my $ed25519;
+my $bits = 1024;
+my $domain = "@DOMAIN@";
+my $version = "@DOMAIN@";
+my $outdir = ".";
+my $nosubdomains = 0;
+my $subdomains = 1;
+my $hashalgs;
+my $note;
+my $flags = "";
+my $selector = "default";
+my $restricted = 0;
+my $testmode = 0;
+my $verbose = 0;
+my $append = 0;
+my $showversion = 0;
+my $keyin;
+my $status;
+my $txtout;
+my $keydata;
+my $helponly;
+my $hashout;
+my $noteout;
+my $comment;
+my $len;
+my $cur;
+my $domstr;
+
+my $progname = basename($0);
+
+##
+##  Usage message
+##
+
+sub usage
+{
+	print STDERR "$progname: usage: $progname [options]\n";
+	print STDERR "\t--append-domain        include domain name in zone file stub\n";
+	print STDERR "\t--bits=n               use n bits to generate the key\n";
+	print STDERR "\t--directory=path       leave output in the named directory\n";
+	print STDERR "\t--domain=name          generate data for the named domain [$domain]\n";
+	print STDERR "\t--ed25519              generate a ed25519 key\n";
+	print STDERR "\t--hash-algorithms=list limit to use of the named algorithm(s)\n";
+	print STDERR "\t--help                 print help and exit\n";
+	print STDERR "\t--note=string          include specified note in zone data\n";
+	print STDERR "\t--restrict             restrict key to email use only\n";
+	print STDERR "\t--selector=name        selector name [$selector]\n";
+	print STDERR "\t--subdomains           allow signing of subdomains\n";
+	print STDERR "\t--testmode             indicate key is in test mode\n";
+	print STDERR "\t--verbose              increased output\n";
+	print STDERR "\t--version              print version and exit\n";
+}
+
+##
+## Argument processing
+##
+
+# parse command line arguments
+Getopt::Long::Configure("bundling");
+my $opt_retval = &Getopt::Long::GetOptions('a|append-domain!' => \$append,
+                                           'b|bits=i' => \$bits,
+                                           'D|directory=s' => \$outdir,
+                                           'd|domain=s' => \$domain,
+                                           'ed25519' => \$ed25519,
+                                           'h|hash-algorithms=s' => \$hashalgs,
+                                           'help!' => \$helponly,
+                                           'n|note=s' => \$note,
+                                           'r|restrict!' => \$restricted,
+                                           's|selector=s' => \$selector,
+                                           'S!' => \$nosubdomains,
+                                           'subdomains!' => \$subdomains,
+                                           't|testmode!' => \$testmode,
+                                           'v|verbose+' => \$verbose,
+                                           'V|version!' => \$showversion,
+                                          );
+
+if (!$opt_retval || $helponly)
+{
+	usage();
+
+	if ($helponly)
+	{
+		exit(0);
+	}
+	else                                
+	{
+		exit(1);
+	}
+}
+
+if ($showversion)
+{
+	print STDOUT "$progname v@VERSION@\n";
+	exit 0;
+}
+
+## do this securely and in the right place
+chdir($outdir) or die "$progname: $outdir: chdir(): $!";;
+umask(077);
+
+if ($ed25519)
+{
+	$status = system("openssl version 2>/dev/null | grep --silent --ignore-case '^openssl 1.1.1'");
+	if ($status != 0)
+	{
+		print STDERR "$progname: OpenSSL 1.1.1 is required for ED25519 support\n";
+		exit(1);
+	}
+}
+
+## generate a private key
+if ($verbose >= 1)
+{
+	print STDERR "$progname: generating private key\n";
+}
+
+if ((!$ed25519) and ($bits < 1024))
+{
+	print STDERR "$progname: WARNING: RFC6376 advises minimum 1024-bit keys\n";
+}
+
+if ($ed25519)
+{
+	$status = system("openssl genpkey -algorithm ed25519 -outform PEM -out " . $selector . "." . $domain . ".key > /dev/null 2>&1");
+}
+else
+{
+	$status = system("openssl genrsa -out " . $selector . "." . $domain . ".key " . $bits . " > /dev/null 2>&1");
+}
+if ($status != 0)
+{
+	if ($? & 127)
+	{
+		print STDERR "$progname: openssl died with signal %d\n",
+		      ($? & 127);
+		exit(1);
+	}
+	else
+	{
+		print STDERR "$progname: openssl exited with status %d\n",
+		      ($? >> 8);
+		exit(1);
+	}
+}
+
+if ($verbose)
+{
+	print STDERR "$progname: private key written to " . $selector . "." . $domain . ".key\n";
+}
+
+## generate a public key based on the private key
+if ($verbose)
+{
+	print STDERR "$progname: extracting public key\n";
+}
+
+if ($ed25519)
+{
+	$status = system("openssl pkey -in ". $selector . "." . $domain . ".key -inform PEM -outform DER -pubout 2>/dev/null | tail -c +13 | openssl base64 > " . $selector . "." . $domain . ".pub 2>/dev/null");
+}
+else
+{
+	$status = system("openssl rsa -in " . $selector . "." . $domain . ".key -pubout -out " . $selector . "." . $domain . ".pub -outform PEM > /dev/null 2>&1");
+}
+if ($status != 0)
+{
+	if ($? & 127)
+	{
+		print STDERR "$progname: openssl died with signal %d\n",
+		      ($? & 127);
+		exit(1);
+	}
+	else
+	{
+		print STDERR "$progname: openssl exited with status %d\n",
+		      ($? >> 8);
+		exit(1);
+	}
+}
+
+if (!open($keyin, "<", $selector . "." . $domain . ".pub"))
+{
+	print STDERR "$progname: unable to read from " . $selector . "." . $domain .  ".pub: $!\n";
+	exit(1);
+}
+
+while (<$keyin>)
+{
+	chomp;
+	if ($_ =~ /^-/)
+	{
+		next;
+	}
+
+	$keydata .= $_;
+}
+
+close($keyin);
+
+## output the record
+if ($testmode)
+{
+	$flags = "t=y;";
+}
+
+if ($nosubdomains)
+{
+	$subdomains = 0;
+}
+
+if (!$subdomains)
+{
+	if ($flags eq "t=y;")
+	{
+		$flags = "t=y:s;";
+	}
+	else
+	{
+		$flags = "t=s;";
+	}
+}
+
+if ($restricted)
+{
+	if ($flags ne "")
+	{
+		$flags .= " ";
+	}
+
+	$flags .= "s=email;";
+}
+
+if ($flags ne "")
+{
+	$flags .= " ";
+}
+
+$hashout = "";
+if (defined($hashalgs))
+{
+	$hashout = " h=$hashalgs;";
+}
+
+$noteout = "";
+if (defined($note))
+{
+	$noteout = " n=\\\"$note\\\";";
+}
+
+$domstr = "";
+if ($append)
+{
+	$domstr = "." . $domain . ".";
+}
+
+if ($domain ne "")
+{
+	$comment = " ; ----- ARC key $selector for $domain"
+}
+else
+{
+	$comment = "";
+}
+
+if (!open($txtout, ">", $selector . "." . $domain . ".txt"))
+{
+	print STDERR "$progname: unable to write from " . $selector . "." . $domain . ".txt: $!\n";
+	exit(1);
+}
+
+if ($ed25519)
+{
+	print $txtout $selector . "._domainkey" . ${domstr} . "\tIN\tTXT\t( \"v=DKIM1;" . $noteout . $hashout . " k=ed25519; " . $flags . "\"\n\t  \"p=";
+}
+else
+{
+	print $txtout $selector . "._domainkey" . ${domstr} . "\tIN\tTXT\t( \"v=DKIM1;" . $noteout . $hashout . " k=rsa; " . $flags . "\"\n\t  \"p=";
+}
+
+$len = length($keydata);
+$cur = 0;
+
+while ($len > 0)
+{
+	if ($len < 250)
+	{
+		print $txtout substr($keydata, $cur);
+		$len = 0;
+	}
+	else
+	{
+		print $txtout substr($keydata, $cur, 250);
+		print $txtout "\"\n\t  \"";
+		$cur += 250;
+		$len -= 250;
+	}
+}
+
+print $txtout "\" ) " . $comment . "\n";
+
+close($txtout);
+
+if ($verbose)
+{
+	print STDERR "$progname: DNS TXT record written to " . $selector . ".txt\n";
+}
+
+## all done!
+unlink($selector . ".pub");
+exit(0);
