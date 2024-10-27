@@ -129,7 +129,12 @@ that shipped with version @VERSION@ of
 .I OpenARC.
 .SH EXAMPLES
 An example:
-\-\-sudo --user openarc openarc-genkey --directory=/etc/openarc/keys --domain=yourdomain.org --selector=20241007
+.PP
+.TP
+sudo --user openarc openarc-genkey \
+--directory=/etc/openarc/keys \
+--domain=yourdomain.org \
+--selector=20241007
 .SH COPYRIGHT
 This software is based on opendkim-genkey, which has the following
 copyrights:
