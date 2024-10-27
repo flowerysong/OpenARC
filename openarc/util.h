@@ -19,7 +19,7 @@
 /* PROTOTYPES */
 extern const char **arcf_mkarray(char *);
 extern size_t       arcf_inet_ntoa(struct in_addr, char *, size_t);
-extern void         arcf_lowercase(u_char *);
+extern void         arcf_lowercase(unsigned char *);
 extern void         arcf_optlist(FILE *);
 extern void         arcf_setmaxfd(void);
 extern int          arcf_socket_cleanup(char *);

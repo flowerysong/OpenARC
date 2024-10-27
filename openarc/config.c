@@ -34,7 +34,8 @@
 #include <strl.h>
 #endif /* USE_STRL_H */
 
-/* opendkim includes */
+/* openarc includes */
+#include "arc-malloc.h"
 #include "config.h"
 
 /* limits */
@@ -78,7 +79,7 @@ config_getline(FILE *in)
 
     assert(in != NULL);
 
-    new = malloc(asize);
+    new = ARC_MALLOC(asize);
     if (new == NULL)
     {
         return NULL;
@@ -96,7 +97,7 @@ config_getline(FILE *in)
         {
             if (len == 0)
             {
-                free(new);
+                ARC_FREE(new);
                 new = NULL;
             }
             break;
@@ -108,10 +109,10 @@ config_getline(FILE *in)
 
             asize += BUFRSZ;
 
-            newnew = realloc(new, asize);
+            newnew = ARC_REALLOC(new, asize);
             if (newnew == NULL)
             {
-                free(new);
+                ARC_FREE(new);
                 return NULL;
             }
 
@@ -315,7 +316,7 @@ config_load_level(char             *file,
                     }
                     else if (*deprecated == NULL)
                     {
-                        *deprecated = strdup(def[n].cd_name);
+                        *deprecated = ARC_STRDUP(def[n].cd_name);
                     }
                     else
                     {
@@ -325,7 +326,7 @@ config_load_level(char             *file,
 
                         oldlen = strlen(*deprecated);
                         newlen = oldlen + 2 + strlen(def[n].cd_name);
-                        new = realloc(*deprecated, newlen);
+                        new = ARC_REALLOC(*deprecated, newlen);
                         if (new != NULL)
                         {
                             new[oldlen] = ',';
@@ -381,7 +382,7 @@ config_load_level(char             *file,
         }
         else
         {
-            free(buf);
+            ARC_FREE(buf);
             continue; /* blank line */
         }
 
@@ -404,14 +405,14 @@ config_load_level(char             *file,
                 fclose(in);
             }
 
-            free(buf);
+            ARC_FREE(buf);
             return NULL;
         }
 
         if (def[n].cd_type != CONFIG_TYPE_INCLUDE &&
             def[n].cd_type != CONFIG_TYPE_DEPRECATED)
         {
-            new = (struct config *) malloc(sizeof(struct config));
+            new = ARC_MALLOC(sizeof(struct config));
             if (new == NULL)
             {
                 config_free(cur);
@@ -432,7 +433,7 @@ config_load_level(char             *file,
                     fclose(in);
                 }
 
-                free(buf);
+                ARC_FREE(buf);
                 return NULL;
             }
 
@@ -456,7 +457,7 @@ config_load_level(char             *file,
                     fclose(in);
                 }
 
-                free(buf);
+                ARC_FREE(buf);
                 return NULL;
             }
 
@@ -467,7 +468,7 @@ config_load_level(char             *file,
         }
 
         case CONFIG_TYPE_STRING:
-            new->cfg_string = strdup(str);
+            new->cfg_string = ARC_STRDUP(str);
             break;
 
         case CONFIG_TYPE_BOOLEAN:
@@ -487,7 +488,7 @@ config_load_level(char             *file,
 
         cur = new;
 
-        free(buf);
+        ARC_FREE(buf);
     }
 
     conf_error = CONF_SUCCESS;
@@ -499,7 +500,7 @@ config_load_level(char             *file,
 
     if (myline == 0 || cur == NULL)
     {
-        cur = (struct config *) malloc(sizeof *cur);
+        cur = ARC_MALLOC(sizeof *cur);
         if (cur != NULL)
         {
             cur->cfg_bool = false;
@@ -599,9 +600,9 @@ config_free(struct config *head)
         next = cur->cfg_next;
         if (cur->cfg_type == CONFIG_TYPE_STRING && cur->cfg_string != NULL)
         {
-            free(cur->cfg_string);
+            ARC_FREE(cur->cfg_string);
         }
-        free(cur);
+        ARC_FREE(cur);
         cur = next;
     }
 }

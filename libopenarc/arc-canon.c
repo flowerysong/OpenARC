@@ -565,14 +565,13 @@ arc_canon_init(ARC_MESSAGE *msg, bool tmp, bool keep)
             return ARC_STAT_NORESOURCE;
         }
 
-        cur->canon_hash = ARC_MALLOC(sizeof(struct arc_hash));
+        cur->canon_hash = ARC_CALLOC(1, sizeof(struct arc_hash));
         if (cur->canon_hash == NULL)
         {
             arc_error(msg, "unable to allocate %d bytes",
                       sizeof(struct arc_hash));
             return ARC_STAT_NORESOURCE;
         }
-        memset(cur->canon_hash, '\0', sizeof(struct arc_hash));
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
         cur->canon_hash->hash_ctx = EVP_MD_CTX_create();
@@ -842,13 +841,11 @@ arc_canon_selecthdrs(ARC_MESSAGE          *msg,
         hdr->hdr_flags &= ~ARC_HDR_SIGNED;
     }
 
-    n = msg->arc_hdrcnt * sizeof(struct arc_hdrfield *);
-    lhdrs = ARC_MALLOC(n);
+    lhdrs = ARC_CALLOC(msg->arc_hdrcnt, sizeof(struct arc_hdrfield *));
     if (lhdrs == NULL)
     {
         return -1;
     }
-    memset(lhdrs, '\0', n);
 
     shcnt = 1;
     for (colon = msg->arc_hdrlist; *colon != '\0'; colon++)
@@ -858,14 +855,12 @@ arc_canon_selecthdrs(ARC_MESSAGE          *msg,
             shcnt++;
         }
     }
-    n = sizeof(unsigned char *) * shcnt;
-    hdrs = ARC_MALLOC(n);
+    hdrs = ARC_CALLOC(shcnt, sizeof(unsigned char *));
     if (hdrs == NULL)
     {
         ARC_FREE(lhdrs);
         return -1;
     }
-    memset(hdrs, '\0', n);
 
     n = 0;
 
@@ -1184,7 +1179,7 @@ arc_canon_runheaders(ARC_MESSAGE *msg)
     bool                  signing;
     unsigned char         savechar;
     int                   c;
-    int                   n;
+    size_t                n;
     int                   nhdrs = 0;
     ARC_STAT              status;
     ARC_CANON            *cur;
@@ -1200,7 +1195,7 @@ arc_canon_runheaders(ARC_MESSAGE *msg)
     }
 
     n = msg->arc_hdrcnt * sizeof(struct arc_hdrfield *);
-    hdrset = ARC_MALLOC(n);
+    hdrset = ARC_CALLOC(msg->arc_hdrcnt, sizeof(struct arc_hdrfield *));
     if (hdrset == NULL)
     {
         return ARC_STAT_NORESOURCE;

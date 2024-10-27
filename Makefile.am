@@ -34,8 +34,6 @@ libopenarc_libopenarc_la_SOURCES = \
 	libopenarc/arc-internal.h \
 	libopenarc/arc-keys.c \
 	libopenarc/arc-keys.h \
-	libopenarc/arc-mailparse.c \
-	libopenarc/arc-mailparse.h \
 	libopenarc/arc-tables.c \
 	libopenarc/arc-tables.h \
 	libopenarc/arc-types.h \
@@ -92,6 +90,15 @@ openarc_openarc_CFLAGS = $(PTHREAD_CFLAGS)
 openarc_openarc_CPPFLAGS = -I$(srcdir)/libopenarc -I$(srcdir)/util $(OPENSSL_CFLAGS) $(LIBIDN2_CFLAGS) $(LIBMILTER_CPPFLAGS) $(LIBJANSSON_CFLAGS)
 openarc_openarc_LDFLAGS = $(LIBMILTER_LDFLAGS) $(PTHREAD_CFLAGS)
 openarc_openarc_LDADD = libopenarc/libopenarc.la $(LIBMILTER_LIBS) $(OPENSSL_LIBS) $(LIBIDN2_LIBS) $(PTHREAD_LIBS) $(LIBJANSSON_LIBS) $(LIBRESOLV)
+
+noinst_PROGRAMS = openarc/ar-test
+
+openarc_ar_test_SOURCES = \
+	openarc/openarc-ar.c \
+	openarc/openarc-ar.h \
+	openarc/ar-test.c
+
+openarc_ar_test_CPPFLAGS = -I$(srcdir)/libopenarc -I$(srcdir)/util
 endif
 
 $(DIST_ARCHIVES).sha1: $(DIST_ARCHIVES)

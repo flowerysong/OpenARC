@@ -246,9 +246,9 @@ arcf_socket_cleanup(char *sockspec)
 */
 
 void
-arcf_lowercase(u_char *str)
+arcf_lowercase(unsigned char *str)
 {
-    u_char *p;
+    unsigned char *p;
 
     assert(str != NULL);
 
@@ -319,7 +319,7 @@ arcf_mkarray(char *in)
         }
     }
 
-    out = (char **) malloc((n + 1) * sizeof(char *));
+    out = ARC_CALLOC(n + 1, sizeof(char *));
     if (out == NULL)
     {
         return (const char **) NULL;

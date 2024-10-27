@@ -15,9 +15,6 @@
 #include <string.h>
 #include <sys/param.h>
 #include <sys/types.h>
-#ifdef ARTEST
-#include <sysexits.h>
-#endif /* ARTEST */
 
 /* libbsd if found */
 #ifdef USE_BSD_H
@@ -126,7 +123,7 @@ enum ar_parser_state
 **  	pointers available.
 */
 
-static int
+int
 ares_tokenize(const char *input,
               char       *outbuf,
               size_t      outbuflen,
@@ -857,80 +854,3 @@ ares_getptype(ares_ptype ptype)
 {
     return (const char *) ares_xconvert(ptypes, ptype);
 }
-
-#ifdef ARTEST
-/*
-**  MAIN -- program mainline
-**
-**  Parameters:
-**  	argc, argv -- the usual
-**
-**  Return value:
-**  	EX_USAGE or EX_OK
-*/
-
-int
-main(int argc, char **argv)
-{
-    int            c;
-    int            d;
-    int            status;
-    char          *p;
-    char          *progname;
-    struct authres ar;
-    u_char         buf[ARC_MAXHEADER + 2];
-    u_char        *toks[ARES_MAXTOKENS];
-
-    progname = (p = strrchr(argv[0], '/')) == NULL ? argv[0] : p + 1;
-
-    if (argc != 2)
-    {
-        printf("%s: usage: %s header-value\n", progname, progname);
-        return EX_USAGE;
-    }
-
-    c = ares_tokenize(((u_char **) argv)[1], buf, sizeof buf, toks,
-                      ARES_MAXTOKENS);
-    for (d = 0; d < c; d++)
-    {
-        printf("token %d = '%s'\n", d, toks[d]);
-    }
-
-    printf("\n");
-
-    status = ares_parse(((u_char **) argv)[1], &ar, NULL);
-    if (status == -1)
-    {
-        printf("%s: ares_parse() returned -1\n", progname);
-        return EX_OK;
-    }
-
-    printf("%d result%s found\n", ar.ares_count, ar.ares_count == 1 ? "" : "s");
-
-    printf("authserv-id '%s'\n", ar.ares_host);
-    printf("version '%s'\n", ar.ares_version);
-
-    for (c = 0; c < ar.ares_count; c++)
-    {
-        printf("result #%d, %d propert%s\n", c, ar.ares_result[c].result_props,
-               ar.ares_result[c].result_props == 1 ? "y" : "ies");
-
-        printf("\tmethod \"%s\"\n",
-               ares_xconvert(methods, ar.ares_result[c].result_method));
-        printf("\tresult \"%s\"\n",
-               ares_xconvert(aresults, ar.ares_result[c].result_result));
-        printf("\treason \"%s\"\n", ar.ares_result[c].result_reason);
-        printf("\tcomment \"%s\"\n", ar.ares_result[c].result_comment);
-
-        for (d = 0; d < ar.ares_result[c].result_props; d++)
-        {
-            printf("\tproperty #%d\n", d);
-            printf("\t\tptype \"%s\"\n",
-                   ares_xconvert(ptypes, ar.ares_result[c].result_ptype[d]));
-            printf("\t\tproperty \"%s\"\n",
-                   ar.ares_result[c].result_property[d]);
-            printf("\t\tvalue \"%s\"\n", ar.ares_result[c].result_value[d]);
-        }
-    }
-}
-#endif /* ARTEST */

@@ -50,7 +50,7 @@ struct configdef arcf_config[] = {
     {"TestKeys",                      CONFIG_TYPE_STRING,  false},
     {"UMask",                         CONFIG_TYPE_INTEGER, false},
     {"UserID",                        CONFIG_TYPE_STRING,  false},
-    {NULL,                            (u_int) -1,          false}
+    {NULL,                            (unsigned int) -1,   false}
 };
 
 #endif /* _ARC_CONFIG_H_ */

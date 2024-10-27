@@ -7,6 +7,7 @@
 #define ARC_ARC_INTERNAL_H_
 
 /* libopenarc includes */
+#include "arc-malloc.h"
 #include "arc.h"
 
 #ifndef MAXPATHLEN
@@ -101,15 +102,6 @@ typedef struct arc_plist ARC_PLIST;
 
 struct arc_canon;
 typedef struct arc_canon ARC_CANON;
-
-/*
-**  memory allocation wrappers
-*/
-
-#define ARC_FREE    free
-#define ARC_MALLOC  malloc
-#define ARC_REALLOC realloc
-#define ARC_STRDUP  strdup
 
 /*
 **  ARC_ERROR_CB -- arc_error wrapper for use as a callback.

@@ -27,7 +27,7 @@
 struct config
 {
     bool           cfg_bool;
-    u_int          cfg_type;
+    unsigned int   cfg_type;
     int            cfg_int;
     char          *cfg_name;
     char          *cfg_string;
@@ -36,9 +36,9 @@ struct config
 
 struct configdef
 {
-    char *cd_name;
-    u_int cd_type;
-    bool  cd_req;
+    char        *cd_name;
+    unsigned int cd_type;
+    bool         cd_req;
 };
 
 /* prototypes */

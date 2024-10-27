@@ -91,6 +91,7 @@ struct authres
     struct result ares_result[MAXARESULTS];
 };
 
+extern int         ares_tokenize(const char *, char *, size_t, char **, int);
 extern int         ares_parse(const char *, struct authres *, const char *);
 extern bool        ares_istoken(const char *);
 

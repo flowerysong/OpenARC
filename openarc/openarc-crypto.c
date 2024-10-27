@@ -87,7 +87,7 @@ arcf_crypto_get_id(void)
     id = pthread_getspecific(id_key);
     if (id == NULL)
     {
-        id = (unsigned long *) malloc(sizeof *id);
+        id = ARC_MALLOC(sizeof *id);
         assert(pthread_mutex_lock(&id_lock) == 0);
         threadid++;
         *id = threadid;
@@ -127,7 +127,7 @@ arcf_crypto_free_id(void *ptr)
 
         ERR_remove_state(0);
 
-        free(ptr);
+        ARC_FREE(ptr);
 
         /* now we can actually clear it for real */
         assert(pthread_setspecific(id_key, NULL) == 0);
@@ -152,7 +152,7 @@ arcf_crypto_dyn_create(/* UNUSED */ const char *file,
     int err;
     pthread_mutex_t *new;
 
-    new = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
+    new = ARC_MALLOC(sizeof(pthread_mutex_t));
     if (new == NULL)
     {
         return NULL;
@@ -161,7 +161,7 @@ arcf_crypto_dyn_create(/* UNUSED */ const char *file,
     err = pthread_mutex_init(new, NULL);
     if (err != 0)
     {
-        free(new);
+        ARC_FREE(new);
         return NULL;
     }
 
@@ -189,7 +189,7 @@ arcf_crypto_dyn_destroy(struct CRYPTO_dynlock_value *lock,
 
     pthread_mutex_destroy((pthread_mutex_t *) lock);
 
-    free(lock);
+    ARC_FREE(lock);
 }
 
 /*
@@ -246,7 +246,7 @@ arcf_crypto_init(void)
     int status;
 
     n = CRYPTO_num_locks();
-    mutexes = (pthread_mutex_t *) malloc(n * sizeof(pthread_mutex_t));
+    mutexes = ARC_CALLOC(n, sizeof(pthread_mutex_t));
     if (mutexes == NULL)
     {
         return errno;
@@ -285,13 +285,6 @@ arcf_crypto_init(void)
     CRYPTO_set_dynlock_lock_callback(&arcf_crypto_dyn_lock);
     CRYPTO_set_dynlock_destroy_callback(&arcf_crypto_dyn_destroy);
 
-#ifdef USE_OPENSSL_ENGINE
-    if (!SSL_set_engine(NULL))
-    {
-        return EINVAL;
-    }
-#endif /* USE_OPENSSL_ENGINE */
-
     crypto_init_done = true;
 
     return 0;
@@ -327,7 +320,7 @@ arcf_crypto_free(void)
                 pthread_mutex_destroy(&mutexes[c]);
             }
 
-            free(mutexes);
+            ARC_FREE(mutexes);
             mutexes = NULL;
             nmutexes = 0;
         }

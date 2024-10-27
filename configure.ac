@@ -87,22 +87,22 @@ AC_SEARCH_LIBS(socket, socket)
 AC_SEARCH_LIBS(inet_aton, resolv)
 AC_SEARCH_LIBS(inet_pton, resolv,
                AC_DEFINE(HAVE_INET_PTON, 1,
-                         [Define to 1 if you have the `inet_pton()' function.]))
+                         [Define to 1 if you have the inet_pton() function.]))
 AC_SEARCH_LIBS(inet_ntop, resolv nsl,
                AC_DEFINE(HAVE_INET_NTOP, 1,
-                        [Define to 1 if you have the `inet_ntop()' function.]))
+                        [Define to 1 if you have the inet_ntop() function.]))
 AC_SEARCH_LIBS(getaddrinfo, resolv,
                AC_DEFINE(HAVE_GETADDRINFO, 1,
-                         [Define to 1 if you have the `getaddrinfo()' function.]))
+                         [Define to 1 if you have the getaddrinfo() function.]))
 AC_SEARCH_LIBS(res_ninit, resolv,
                AC_DEFINE(HAVE_RES_NINIT, 1,
-                         [Define to 1 if you have the `res_ninit()' function.]))
+                         [Define to 1 if you have the res_ninit() function.]))
 AC_SEARCH_LIBS(res_sertservers, resolv bind,
                AC_DEFINE(HAVE_RES_SETSERVERS, 1,
-                         [Define to 1 if you have the `res_setservers()' function.]))
+                         [Define to 1 if you have the res_setservers() function.]))
 AC_SEARCH_LIBS(getopt_long, iberty,
                AC_DEFINE(HAVE_GETOPT_LONG, 1,
-                         [Define to 1 if you have the `getopt_long()' function.]))
+                         [Define to 1 if you have the getopt_long() function.]))
 
 AC_HEADER_RESOLV
 
@@ -132,23 +132,23 @@ AC_MSG_CHECKING([whether the resolver works without -lresolv])
 LIBRESOLV=
 AC_LINK_IFELSE([AC_LANG_SOURCE([
 $dnscheck
-])] , [
-	AC_MSG_RESULT(yes)
-] , [
-	AC_MSG_RESULT(no)
-	AC_MSG_CHECKING([whether the resolver works with -lresolv])
-	saved_LIBS="$LIBS"
-	LIBS="$outer_LIBS -lresolv"
-	AC_LINK_IFELSE([AC_LANG_SOURCE([
+])], [
+    AC_MSG_RESULT(yes)
+], [
+    AC_MSG_RESULT(no)
+    AC_MSG_CHECKING([whether the resolver works with -lresolv])
+    saved_LIBS="$LIBS"
+    LIBS="$outer_LIBS -lresolv"
+    AC_LINK_IFELSE([AC_LANG_SOURCE([
 $dnscheck
-	])] , [
-		AC_MSG_RESULT(yes)
-		LIBRESOLV=-lresolv
-	] , [
-		AC_MSG_RESULT(no)
-		AC_MSG_ERROR([need workable resolver library])
-	])
-	LIBS="$saved_LIBS"
+    ])], [
+        AC_MSG_RESULT(yes)
+        LIBRESOLV=-lresolv
+    ], [
+        AC_MSG_RESULT(no)
+        AC_MSG_ERROR([need workable resolver library])
+    ])
+    LIBS="$saved_LIBS"
 ])
 AC_SUBST([LIBRESOLV])
 
@@ -191,98 +191,83 @@ AC_CHECK_HEADERS([bsd/string.h], [bsdstrl_h_found="yes"])
 
 AC_CHECK_FUNCS([strlcat strlcpy], [strl_found="yes"],
                [
-		saved_LIBS="$LIBS"
-		LIBS="$outer_LIBS"
-		AC_SEARCH_LIBS([strlcat],
-		               [bsd strl],
-		               [libstrl_found="yes"],
-		               [strl_found="no"])
-		AC_SEARCH_LIBS([strlcpy],
-		               [bsd strl],
-		               [libstrl_found="yes"],
-		               [strl_found="no"])
-		STRL_LIBS="$LIBS"
-		LIBS="$saved_LIBS"
+                saved_LIBS="$LIBS"
+                LIBS="$outer_LIBS"
+                AC_SEARCH_LIBS([strlcat],
+                               [bsd strl],
+                               [libstrl_found="yes"],
+                               [strl_found="no"])
+                AC_SEARCH_LIBS([strlcpy],
+                               [bsd strl],
+                               [libstrl_found="yes"],
+                               [strl_found="no"])
+                STRL_LIBS="$LIBS"
+                LIBS="$saved_LIBS"
                ])
 
-if test x"$libstrl_found" = x"yes"
-then
-	LIBS="$LIBS $STRL_LIBS"
-fi
+AS_IF([test "x$libstrl_found" = xyes], [LIBS="$LIBS $STRL_LIBS"])
 
 # we need something above to have worked
-if test x"$strl_found" != x"yes" -a x"$libstrl_found" != x"yes"
-then
-	AC_MSG_ERROR(no strlcpy/strlcat found)
-fi
+AS_IF([test "x$strl_found" != xyes -a "x$libstrl_found" != xyes], [
+    AC_MSG_ERROR(no strlcpy/strlcat found)
+])
 
 AC_SUBST(STRL_LIBS)
 
 AC_CHECK_HEADERS([strl.h], [strl_h_found="yes"])
-if test x"$strl_h_found" != x"yes"
-then
-	strldirs="/usr/local/include /usr/include"
+AS_IF([test "x$strl_h_found" != xyes], [
+    strldirs="/usr/local/include /usr/include"
 
-	for d in $strldirs
-	do
-		AC_MSG_CHECKING([for strl.h in $d/strl])
-		if test -f $d/strl/strl.h
-		then
-			unset ac_cv_header_strl_h
-			saved_CPPFLAGS="$CPPFLAGS"
-			CPPFLAGS="$CPPFLAGS -I$d/strl"
-			AC_CHECK_HEADERS([strl.h], [strl_h_found="yes"])
-			CPPFLAGS="$saved_CPPFLAGS"
-		fi
+    for d in $strldirs
+    do
+        AC_MSG_CHECKING([for strl.h in $d/strl])
+        AS_IF([test -f "$d/strl/strl.h"], [
+            unset ac_cv_header_strl_h
+            saved_CPPFLAGS="$CPPFLAGS"
+            CPPFLAGS="$CPPFLAGS -I$d/strl"
+            AC_CHECK_HEADERS([strl.h], [strl_h_found="yes"])
+            CPPFLAGS="$saved_CPPFLAGS"
+        ])
 
-		if test x"$strl_h_found" = x"yes"
-		then
-			CPPFLAGS="$CPPFLAGS -I$d/strl"
-			break
-		fi
-	done
-fi
+        AS_IF([test "x$strl_h_found" = xyes], [
+            CPPFLAGS="$CPPFLAGS -I$d/strl"
+            break
+        ])
+    done
+])
 
 # we need to include <strl.h> if an installed strl.h was found and no
 # bsd/string.h was found
-if test x"$strl_h_found" = x"yes" -a x"$bsdstrl_h_found" = x"no"
-then
-	AC_DEFINE([USE_STRL_H], 1,
-	          [Define to 1 if you need to include <strl.h> to get the strlcat() and strlcpy() functions.])
-fi
+AS_IF([test "x$strl_h_found" = xyes -a "x$bsdstrl_h_found" = xno], [
+    AC_DEFINE([USE_STRL_H], 1, [Define to 1 if you need to include <strl.h> to get the strlcat() and strlcpy() functions.])
+])
 
-if test x"$bsdstrl_h_found" = x"yes"
-then
-	AC_DEFINE([USE_BSD_H], 1,
-	          [Define to 1 if you need to include <bsd/string.h> to get the strlcat() and strlcpy() functions.])
-fi
+AS_IF([test "x$bsdstrl_h_found" = xyes], [
+    AC_DEFINE([USE_BSD_H], 1, [Define to 1 if you need to include <bsd/string.h> to get the strlcat() and strlcpy() functions.])
+])
 
 #
 # use rpath at load time?
 #
 
-AC_ARG_ENABLE(
-	[rpath],
-	AS_HELP_STRING([--enable-rpath],
-	               [include library load paths in binaries]),
-	,
-	enable_rpath="yes")
+AC_ARG_ENABLE([rpath],
+    AS_HELP_STRING([--enable-rpath], [include library load paths in binaries]),
+    [],
+    enable_rpath="yes")
 AM_CONDITIONAL([RPATH], [test x"$enable_rpath" = x"yes"])
-if test x"$enable_rpath" != x"yes"
-then
-	AC_MSG_RESULT([Suppressing -rpath use by libtool])
-	hardcode_libdir_flag_spec=" -D__LIBTOOL_NO_RPATH__ "
-	chmod 0755 libtool
-fi
+AS_IF([test "x$enable_rpath" != xyes], [
+    AC_MSG_RESULT([Suppressing -rpath use by libtool])
+    hardcode_libdir_flag_spec=" -D__LIBTOOL_NO_RPATH__ "
+    chmod 0755 libtool
+])
 
 #
 # openarc
 #
 AC_ARG_ENABLE([filter],
-              AS_HELP_STRING([--disable-filter],
-                             [do not compile the openarc filter]),
-              [enable_filter=$enableval],
-              [enable_filter=yes])
+    AS_HELP_STRING([--disable-filter], [do not compile the openarc filter]),
+    [enable_filter=$enableval],
+    [enable_filter=yes])
 AM_CONDITIONAL([BUILD_FILTER], [test x"$enable_filter" != x"no"])
 
 #
@@ -292,18 +277,15 @@ AM_CONDITIONAL([BUILD_FILTER], [test x"$enable_filter" != x"no"])
 LIBOPENARC_FEATURE_STRING="libopenarc $PACKAGE_VERSION:"
 
 AC_ARG_ENABLE([allsymbols],
-              AS_HELP_STRING([--enable-allsymbols],
-                             [export internal-use symbols for better test coverage]))
+    AS_HELP_STRING([--enable-allsymbols], [export internal-use symbols for better test coverage]))
 AM_CONDITIONAL(ALL_SYMBOLS, [test x"$enable_allsymbols" = x"yes"])
 
 AC_ARG_ENABLE([debug],
-              AS_HELP_STRING([--enable-debug],
-	                     [produce debugging binaries and libraries]),
-              AS_IF([test "x$enable_debug" = x"yes"],
-		[
-			LIBOPENARC_FEATURE_STRING="$LIBOPENARC_FEATURE_STRING debug"
-			[[CFLAGS=`echo $CFLAGS | sed 's/ -O[1-9s]*//g'`]]
-		])
+    AS_HELP_STRING([--enable-debug], [produce debugging binaries and libraries]),
+    AS_IF([test "x$enable_debug" = x"yes"], [
+        LIBOPENARC_FEATURE_STRING="$LIBOPENARC_FEATURE_STRING debug"
+        [[CFLAGS=`echo $CFLAGS | sed 's/ -O[1-9s]*//g'`]]
+    ])
 )
 
 AM_CONDITIONAL([DEBUG], [test x"$enable_debug" = x"yes"])

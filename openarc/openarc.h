@@ -24,6 +24,7 @@
 #endif /* ARCF_MILTER_PROTOTYPES */
 
 /* libopenarc */
+#include "arc-malloc.h"
 #include "arc.h"
 
 /* libjansson */
@@ -80,7 +81,7 @@ extern sfsistat mlfi_envfrom(SMFICTX *, char **);
 extern sfsistat mlfi_envrcpt(SMFICTX *, char **);
 extern sfsistat mlfi_header(SMFICTX *, char *, char *);
 extern sfsistat mlfi_eoh(SMFICTX *);
-extern sfsistat mlfi_body(SMFICTX *, u_char *, size_t);
+extern sfsistat mlfi_body(SMFICTX *, unsigned char *, size_t);
 extern sfsistat mlfi_eom(SMFICTX *);
 extern sfsistat mlfi_abort(SMFICTX *);
 extern sfsistat mlfi_close(SMFICTX *);

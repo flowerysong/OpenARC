@@ -21,6 +21,7 @@
 #include <unistd.h>
 
 #include "arc-dstring.h"
+#include "arc-malloc.h"
 
 /*
 **  ARC_DSTRING_RESIZE -- resize a dynamic string (dstring)
@@ -84,7 +85,7 @@ arc_dstring_resize(struct arc_dstring *dstr, int len)
         }
     }
 
-    new = malloc(newsz);
+    new = ARC_MALLOC(newsz);
     if (new == NULL)
     {
         if (dstr->ds_cb)
@@ -95,7 +96,7 @@ arc_dstring_resize(struct arc_dstring *dstr, int len)
     }
 
     memcpy(new, dstr->ds_buf, dstr->ds_alloc);
-    free(dstr->ds_buf);
+    ARC_FREE(dstr->ds_buf);
     dstr->ds_alloc = newsz;
     dstr->ds_buf = new;
 
@@ -133,7 +134,7 @@ arc_dstring_new(int   len,
         len = 1024;
     }
 
-    new = malloc(sizeof *new);
+    new = ARC_MALLOC(sizeof *new);
     if (new == NULL)
     {
         if (callback)
@@ -145,14 +146,14 @@ arc_dstring_new(int   len,
 
     new->ds_ctx = ctx;
     new->ds_cb = callback;
-    new->ds_buf = malloc(len);
+    new->ds_buf = ARC_MALLOC(len);
     if (new->ds_buf == NULL)
     {
         if (callback)
         {
             callback(ctx, "unable to allocate %d bytes", sizeof len);
         }
-        free(new);
+        ARC_FREE(new);
         return NULL;
     }
 
@@ -182,8 +183,8 @@ arc_dstring_free(struct arc_dstring *dstr)
         return;
     }
 
-    free(dstr->ds_buf);
-    free(dstr);
+    ARC_FREE(dstr->ds_buf);
+    ARC_FREE(dstr);
 }
 
 /*
@@ -567,7 +568,7 @@ arc_copy_array(char **in)
         continue;
     }
 
-    out = calloc(sizeof(char *), n + 1);
+    out = ARC_CALLOC(sizeof(char *), n + 1);
     if (out == NULL)
     {
         return NULL;
@@ -575,14 +576,14 @@ arc_copy_array(char **in)
 
     for (c = 0; c < n; c++)
     {
-        out[c] = strdup(in[c]);
+        out[c] = ARC_STRDUP(in[c]);
         if (out[c] == NULL)
         {
             for (n = 0; n < c; n++)
             {
-                free(out[n]);
+                ARC_FREE(out[n]);
             }
-            free(out);
+            ARC_FREE(out);
             return NULL;
         }
     }
@@ -611,8 +612,8 @@ arc_clobber_array(char **in)
 
     for (n = 0; in[n] != NULL; n++)
     {
-        free(in[n]);
+        ARC_FREE(in[n]);
     }
 
-    free(in);
+    ARC_FREE(in);
 }

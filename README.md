@@ -91,6 +91,9 @@ $ make
 $ make install
 ```
 
+You can get a list of available flags and environment variables to
+influence the build by running `./configure --help`.
+
 ## Testing
 
 Tests can be run with `make check`. OpenARC's test suite requires:

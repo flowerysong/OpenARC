@@ -31,6 +31,11 @@ All notable changes to this project will be documented in this file.
   failure, as required by [RFC 8617 section 4.1.3](https://datatracker.ietf.org/doc/html/rfc8617#section-4.1.3).
 - milter - `Authentication-Results` and `ARC-Authentication-Results` include
   `header.oldest-pass` when appropriate.
+- milter - An `ar-test` program for seeing how `Authentication-Results`
+  headers are parsed is built without making you jump through weird hoops.
+
+### Removed
+- libopenarc - `arc_mail_parse()`
 
 ### Fixed
 - libopenarc - Seals on failed chains only cover the latest ARC header set,

@@ -60,13 +60,11 @@ arc_res_init(void **srv)
 #ifdef HAVE_RES_NINIT
     struct __res_state *res;
 
-    res = ARC_MALLOC(sizeof(struct __res_state));
+    res = ARC_CALLOC(1, sizeof(struct __res_state));
     if (res == NULL)
     {
         return -1;
     }
-
-    memset(res, '\0', sizeof(struct __res_state));
 
     if (res_ninit(res) != 0)
     {

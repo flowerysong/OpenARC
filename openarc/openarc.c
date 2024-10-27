@@ -24,10 +24,6 @@
 #include <sys/prctl.h>
 #endif /* __linux__ */
 #include <sys/queue.h>
-#ifdef USE_LUA
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#endif /* USE_LUA */
 #ifdef AF_INET6
 #include <arpa/inet.h>
 #endif /* AF_INET6 */
@@ -117,8 +113,8 @@ struct arcf_config
     bool            conf_finalreceiver;     /* act as final receiver */
     bool            conf_overridecv;        /* allow A-R to override CV */
     bool            conf_authresip;         /* include remote IP in A-R */
-    u_int           conf_refcnt;            /* reference count */
-    u_int           conf_mode;              /* mode flags */
+    unsigned int    conf_refcnt;            /* reference count */
+    unsigned int    conf_mode;              /* mode flags */
     arc_canon_t     conf_canonhdr;          /* canonicalization for header */
     arc_canon_t     conf_canonbody;         /* canonicalization for body */
     arc_alg_t       conf_signalg;           /* signing algorithm */
@@ -134,7 +130,7 @@ struct arcf_config
     const char    **conf_signhdrs;          /* headers to sign (array) */
     char           *conf_oversignhdrs_raw;  /* fields to over-sign (raw) */
     const char    **conf_oversignhdrs;      /* fields to over-sign (array) */
-    u_char         *conf_keydata;           /* binary key data */
+    unsigned char  *conf_keydata;           /* binary key data */
     size_t          conf_keylen;            /* key length */
     int             conf_maxhdrsz;          /* max. header size */
     struct config  *conf_data;              /* configuration data */
@@ -153,7 +149,7 @@ struct msgctx
 {
     bool                mctx_peer;     /* peer source? */
     ssize_t             mctx_hdrbytes; /* count of header bytes */
-    u_char             *mctx_jobid;    /* job ID */
+    unsigned char      *mctx_jobid;    /* job ID */
     struct Header      *mctx_hqhead;   /* header queue head */
     struct Header      *mctx_hqtail;   /* header queue tail */
     ARC_MESSAGE        *mctx_arcmsg;   /* libopenarc message */
@@ -235,7 +231,7 @@ sfsistat      mlfi_close(SMFICTX *);
 sfsistat      mlfi_connect(SMFICTX *, char *, _SOCK_ADDR *);
 sfsistat      mlfi_envfrom(SMFICTX *, char **);
 sfsistat      mlfi_eoh(SMFICTX *);
-sfsistat      mlfi_body(SMFICTX *, u_char *, size_t);
+sfsistat      mlfi_body(SMFICTX *, unsigned char *, size_t);
 sfsistat      mlfi_eom(SMFICTX *);
 sfsistat      mlfi_header(SMFICTX *, char *, char *);
 sfsistat      mlfi_negotiate(SMFICTX *,
@@ -266,22 +262,12 @@ pthread_mutex_t     pwdb_lock;  /* passwd/group lock */
 char                myhostname[MAXHOSTNAMELEN + 1]; /* local host's name */
 
 /* Other useful definitions */
-#define CRLF         "\r\n" /* CRLF */
-#define SUPERUSER    "root" /* superuser name */
+#define CRLF           "\r\n" /* CRLF */
+#define SUPERUSER      "root" /* superuser name */
 
 /* MACROS */
-#define BITSET(b, s) (((b) & (s)) == (b))
-#define JOBID(x)     ((x) == NULL ? JOBIDUNKNOWN : (char *) (x))
-#define TRYFREE(x)                                                             \
-    do                                                                         \
-    {                                                                          \
-        if ((x) != NULL)                                                       \
-        {                                                                      \
-            free(x);                                                           \
-            (x) = NULL;                                                        \
-        }                                                                      \
-    }                                                                          \
-    while (0)
+#define BITSET(b, s)   (((b) & (s)) == (b))
+#define JOBID(x)       ((x) == NULL ? JOBIDUNKNOWN : (char *) (x))
 #define ARCF_EOHMACROS "i {daemon_name} {auth_type}"
 
 /*
@@ -626,7 +612,7 @@ arcf_restart_check(int n, time_t t)
 
     if (t == 0)
     {
-        list = calloc(n, sizeof(time_t));
+        list = ARC_CALLOC(n, sizeof(time_t));
 
         if (list == NULL)
         {
@@ -1194,13 +1180,12 @@ arcf_config_new(void)
 {
     struct arcf_config *new;
 
-    new = (struct arcf_config *) malloc(sizeof(struct arcf_config));
+    new = ARC_CALLOC(1, sizeof(struct arcf_config));
     if (new == NULL)
     {
         return NULL;
     }
 
-    memset(new, '\0', sizeof(struct arcf_config));
     new->conf_maxhdrsz = DEFMAXHDRSZ;
     new->conf_overridecv = true;
     new->conf_safekeys = true;
@@ -1251,19 +1236,19 @@ arcf_list_load(struct conflist *list, char *path, char **err)
             }
         }
 
-        v = malloc(sizeof(struct configvalue));
+        v = ARC_MALLOC(sizeof(struct configvalue));
         if (v == NULL)
         {
             *err = strerror(errno);
             fclose(f);
             return false;
         }
-        v->value = strdup(buf);
+        v->value = ARC_STRDUP(buf);
         if (v->value == NULL)
         {
             *err = strerror(errno);
             fclose(f);
-            free(v);
+            ARC_FREE(v);
             return false;
         }
 
@@ -1291,13 +1276,13 @@ arcf_addlist(struct conflist *list, char *str, char **err)
 {
     struct configvalue *v;
 
-    v = (struct configvalue *) malloc(sizeof(struct configvalue));
+    v = ARC_MALLOC(sizeof(struct configvalue));
     if (v == NULL)
     {
         *err = strerror(errno);
         return false;
     }
-    v->value = strdup(str);
+    v->value = ARC_STRDUP(str);
 
     LIST_INSERT_HEAD(list, v, entries);
     return true;
@@ -1322,8 +1307,8 @@ arcf_list_destroy(struct conflist *list)
 
         n = LIST_FIRST(list);
         LIST_REMOVE(n, entries);
-        free(n->value);
-        free(n);
+        ARC_FREE(n->value);
+        ARC_FREE(n);
     }
 }
 
@@ -1352,7 +1337,7 @@ arcf_config_free(struct arcf_config *conf)
 
     if (conf->conf_authservid != NULL)
     {
-        free(conf->conf_authservid);
+        ARC_FREE(conf->conf_authservid);
     }
 
     if (!LIST_EMPTY(&conf->conf_peers))
@@ -1372,12 +1357,12 @@ arcf_config_free(struct arcf_config *conf)
 
     if (conf->conf_signhdrs != NULL)
     {
-        free(conf->conf_signhdrs);
+        ARC_FREE(conf->conf_signhdrs);
     }
 
     if (conf->conf_oversignhdrs != NULL)
     {
-        free(conf->conf_oversignhdrs);
+        ARC_FREE(conf->conf_oversignhdrs);
     }
 
     if (!LIST_EMPTY(&conf->conf_sealheaderchecks))
@@ -1385,7 +1370,7 @@ arcf_config_free(struct arcf_config *conf)
         arcf_list_destroy(&conf->conf_sealheaderchecks);
     }
 
-    free(conf);
+    ARC_FREE(conf);
 }
 
 /*
@@ -1413,9 +1398,6 @@ arcf_config_load(struct config      *data,
                  size_t              errlen,
                  char               *become)
 {
-#ifdef USE_LDAP
-    bool btmp;
-#endif /* USE_LDAP */
     char *str;
     char  basedir[MAXPATHLEN + 1];
 
@@ -1431,11 +1413,11 @@ arcf_config_load(struct config      *data,
     }
     if (str == NULL || strcmp(str, "HOSTNAME") == 0)
     {
-        conf->conf_authservid = strdup(myhostname);
+        conf->conf_authservid = ARC_STRDUP(myhostname);
     }
     else
     {
-        conf->conf_authservid = strdup(str);
+        conf->conf_authservid = ARC_STRDUP(str);
     }
 
     if (data != NULL)
@@ -1474,7 +1456,7 @@ arcf_config_load(struct config      *data,
             char *mode;
             char *ctx;
 
-            copy = strdup(str);
+            copy = ARC_STRDUP(str);
             mode = strtok_r(copy, "/", &ctx);
             conf->conf_canonhdr = arcf_lookup_strtoint(mode,
                                                        arcf_canonicalizations);
@@ -1489,7 +1471,7 @@ arcf_config_load(struct config      *data,
                 conf->conf_canonbody = ARC_CANON_SIMPLE;
             }
 
-            free(copy);
+            ARC_FREE(copy);
 
             if (conf->conf_canonhdr == -1 || conf->conf_canonbody == -1)
             {
@@ -1687,13 +1669,13 @@ arcf_config_load(struct config      *data,
     /* load the secret key, if one was specified */
     if (conf->conf_keyfile != NULL)
     {
-        int         status;
-        int         fd;
-        ssize_t     rlen;
-        ino_t       ino = -1;
-        uid_t       asuser = (uid_t) -1;
-        u_char     *s33krit;
-        struct stat s;
+        int            status;
+        int            fd;
+        ssize_t        rlen;
+        ino_t          ino = -1;
+        uid_t          asuser = (uid_t) -1;
+        unsigned char *s33krit;
+        struct stat    s;
 
         fd = open(conf->conf_keyfile, O_RDONLY, 0);
         if (fd < 0)
@@ -1787,7 +1769,7 @@ arcf_config_load(struct config      *data,
             }
         }
 
-        s33krit = malloc(s.st_size + 1);
+        s33krit = ARC_MALLOC(s.st_size + 1);
         if (s33krit == NULL)
         {
             if (conf->conf_dolog)
@@ -1825,7 +1807,7 @@ arcf_config_load(struct config      *data,
             snprintf(err, errlen, "%s: read(): %s", conf->conf_keyfile,
                      strerror(errno));
             close(fd);
-            free(s33krit);
+            ARC_FREE(s33krit);
             return -1;
         }
         else if (rlen != s.st_size)
@@ -1833,13 +1815,13 @@ arcf_config_load(struct config      *data,
             if (conf->conf_dolog)
             {
                 syslog(LOG_ERR, "%s: read() wrong size (%lu)",
-                       conf->conf_keyfile, (u_long) rlen);
+                       conf->conf_keyfile, (unsigned long) rlen);
             }
 
             snprintf(err, errlen, "%s: read() wrong size (%lu)",
-                     conf->conf_keyfile, (u_long) rlen);
+                     conf->conf_keyfile, (unsigned long) rlen);
             close(fd);
-            free(s33krit);
+            ARC_FREE(s33krit);
             return -1;
         }
 
@@ -1879,9 +1861,9 @@ arcf_config_load(struct config      *data,
 static bool
 arcf_config_setlib(struct arcf_config *conf, char **err)
 {
-    ARC_STAT status;
-    u_int    opts;
-    ARC_LIB *lib;
+    ARC_STAT     status;
+    unsigned int opts;
+    ARC_LIB     *lib;
     assert(conf != NULL);
 
     lib = conf->conf_libopenarc;
@@ -2042,7 +2024,7 @@ arcf_config_reload(void)
     else
     {
         bool           err = false;
-        u_int          line;
+        unsigned int   line;
         struct config *cfg;
         char          *missing;
         char          *errstr = NULL;
@@ -2192,13 +2174,11 @@ arcf_initcontext(struct arcf_config *conf)
 
     assert(conf != NULL);
 
-    ctx = (msgctx) malloc(sizeof(struct msgctx));
+    ctx = ARC_CALLOC(1, sizeof(struct msgctx));
     if (ctx == NULL)
     {
         return NULL;
     }
-
-    (void) memset(ctx, '\0', sizeof(struct msgctx));
 
     return ctx;
 }
@@ -2241,11 +2221,11 @@ arcf_cleanup(SMFICTX *ctx)
             hdr = afc->mctx_hqhead;
             while (hdr != NULL)
             {
-                TRYFREE(hdr->hdr_hdr);
-                TRYFREE(hdr->hdr_val);
+                ARC_FREE(hdr->hdr_hdr);
+                ARC_FREE(hdr->hdr_val);
                 prev = hdr;
                 hdr = hdr->hdr_next;
-                TRYFREE(prev);
+                ARC_FREE(prev);
             }
         }
 
@@ -2254,62 +2234,12 @@ arcf_cleanup(SMFICTX *ctx)
             arc_free(afc->mctx_arcmsg);
         }
 
-#ifdef _FFR_VBR
-        if (afc->mctx_vbr != NULL)
-        {
-            vbr_close(afc->mctx_vbr);
-        }
-
-        TRYFREE(afc->mctx_vbrinfo);
-#endif /* _FFR_VBR */
-
         if (afc->mctx_tmpstr != NULL)
         {
             arc_dstring_free(afc->mctx_tmpstr);
         }
 
-#ifdef _FFR_STATSEXT
-        if (afc->mctx_statsext != NULL)
-        {
-            struct statsext *cur;
-            struct statsext *next;
-
-            cur = afc->mctx_statsext;
-            while (cur != NULL)
-            {
-                next = cur->se_next;
-
-                free(cur);
-
-                cur = next;
-            }
-        }
-#endif /* _FFR_STATSEXT */
-
-#ifdef USE_LUA
-        if (afc->mctx_luaglobalh != NULL)
-        {
-            struct lua_global *cur;
-            struct lua_global *next;
-
-            cur = afc->mctx_luaglobalh;
-            while (cur != NULL)
-            {
-                next = cur->lg_next;
-
-                if (cur->lg_type == LUA_TNUMBER || cur->lg_type == LUA_TSTRING)
-                {
-                    free(cur->lg_value);
-                }
-
-                free(cur);
-
-                cur = next;
-            }
-        }
-#endif /* USE_LUA */
-
-        free(afc);
+        ARC_FREE(afc);
         cc->cctx_msg = NULL;
     }
 }
@@ -2500,7 +2430,7 @@ arcf_checkip(struct conflist *list, struct sockaddr *ip)
         dst_len = sizeof ipbuf - 1;
 
         inet_ntop(AF_INET6, &addr, dst, dst_len);
-        arcf_lowercase((u_char *) dst);
+        arcf_lowercase((unsigned char *) dst);
         iplen = strlen(dst);
 
         LIST_FOREACH(node, list, entries)
@@ -2543,7 +2473,7 @@ arcf_checkip(struct conflist *list, struct sockaddr *ip)
             dst_len = sizeof ipbuf - 1;
 
             inet_ntop(AF_INET6, &addr, dst, dst_len);
-            arcf_lowercase((u_char *) dst);
+            arcf_lowercase((unsigned char *) dst);
             iplen = strlen(dst);
 
             sz = strlcat(ipbuf, "/", sizeof ipbuf);
@@ -2763,7 +2693,7 @@ mlfi_negotiate(SMFICTX       *ctx,
     arcf_config_reload();
 
     /* initialize connection context */
-    cc = malloc(sizeof(struct connctx));
+    cc = ARC_CALLOC(1, sizeof(struct connctx));
     if (cc == NULL)
     {
         if (curconf->conf_dolog)
@@ -2773,8 +2703,6 @@ mlfi_negotiate(SMFICTX       *ctx,
 
         return SMFIS_TEMPFAIL;
     }
-
-    memset(cc, '\0', sizeof(struct connctx));
 
     pthread_mutex_lock(&conf_lock);
 
@@ -2799,7 +2727,7 @@ mlfi_negotiate(SMFICTX       *ctx,
         conf->conf_refcnt--;
         pthread_mutex_unlock(&conf_lock);
 
-        free(cc);
+        ARC_FREE(cc);
 
         return SMFIS_REJECT;
     }
@@ -2863,7 +2791,7 @@ mlfi_connect(SMFICTX *ctx, char *host, _SOCK_ADDR *ip)
     cc = arcf_getpriv(ctx);
     if (cc == NULL)
     {
-        cc = malloc(sizeof(struct connctx));
+        cc = ARC_CALLOC(1, sizeof(struct connctx));
         if (cc == NULL)
         {
             pthread_mutex_lock(&conf_lock);
@@ -2879,8 +2807,6 @@ mlfi_connect(SMFICTX *ctx, char *host, _SOCK_ADDR *ip)
             return SMFIS_TEMPFAIL;
         }
 
-        memset(cc, '\0', sizeof(struct connctx));
-
         pthread_mutex_lock(&conf_lock);
 
         cc->cctx_config = curconf;
@@ -2891,7 +2817,7 @@ mlfi_connect(SMFICTX *ctx, char *host, _SOCK_ADDR *ip)
         arcf_setpriv(ctx, cc);
     }
 
-    arcf_lowercase((u_char *) host);
+    arcf_lowercase((unsigned char *) host);
 
     if (host != NULL)
     {
@@ -3061,9 +2987,6 @@ mlfi_envfrom(SMFICTX *ctx, char **envfrom)
 sfsistat
 mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
 {
-#ifdef _FFR_REPLACE_RULES
-    bool dorepl = false;
-#endif /* _FFR_REPLACE_RULES */
     msgctx              afc;
     connctx             cc;
     Header              newhdr;
@@ -3113,7 +3036,7 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
         return SMFIS_CONTINUE;
     }
 
-    newhdr = (Header) malloc(sizeof(struct Header));
+    newhdr = ARC_CALLOC(1, sizeof(struct Header));
     if (newhdr == NULL)
     {
         if (conf->conf_dolog)
@@ -3125,9 +3048,7 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
         return SMFIS_TEMPFAIL;
     }
 
-    (void) memset(newhdr, '\0', sizeof(struct Header));
-
-    newhdr->hdr_hdr = strdup(headerf);
+    newhdr->hdr_hdr = ARC_STRDUP(headerf);
 
     if (afc->mctx_tmpstr == NULL)
     {
@@ -3139,8 +3060,8 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
                 syslog(LOG_ERR, "arc_dstring_new() failed");
             }
 
-            TRYFREE(newhdr->hdr_hdr);
-            free(newhdr);
+            ARC_FREE(newhdr->hdr_hdr);
+            ARC_FREE(newhdr);
 
             arcf_cleanup(ctx);
 
@@ -3193,7 +3114,7 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
         arc_dstring_copy(afc->mctx_tmpstr, headerv);
     }
 
-    newhdr->hdr_val = strdup(arc_dstring_get(afc->mctx_tmpstr));
+    newhdr->hdr_val = ARC_STRDUP(arc_dstring_get(afc->mctx_tmpstr));
 
     newhdr->hdr_next = NULL;
     newhdr->hdr_prev = afc->mctx_hqtail;
@@ -3205,9 +3126,9 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
             syslog(LOG_ERR, "malloc(): %s", strerror(errno));
         }
 
-        TRYFREE(newhdr->hdr_hdr);
-        TRYFREE(newhdr->hdr_val);
-        TRYFREE(newhdr);
+        ARC_FREE(newhdr->hdr_hdr);
+        ARC_FREE(newhdr->hdr_val);
+        ARC_FREE(newhdr);
         arcf_cleanup(ctx);
         return SMFIS_TEMPFAIL;
     }
@@ -3243,15 +3164,15 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
 sfsistat
 mlfi_eoh(SMFICTX *ctx)
 {
-    char                last;
-    u_int               mode;
-    ARC_STAT            status;
-    connctx             cc;
-    msgctx              afc;
-    char               *p;
-    const u_char       *err = NULL;
-    struct arcf_config *conf;
-    Header              hdr;
+    char                 last;
+    unsigned int         mode;
+    ARC_STAT             status;
+    connctx              cc;
+    msgctx               afc;
+    char                *p;
+    const unsigned char *err = NULL;
+    struct arcf_config  *conf;
+    Header               hdr;
 
     assert(ctx != NULL);
 
@@ -3265,10 +3186,10 @@ mlfi_eoh(SMFICTX *ctx)
     **  Determine the message ID for logging.
     */
 
-    afc->mctx_jobid = (u_char *) arcf_getsymval(ctx, "i");
+    afc->mctx_jobid = (unsigned char *) arcf_getsymval(ctx, "i");
     if (afc->mctx_jobid == NULL || afc->mctx_jobid[0] == '\0')
     {
-        afc->mctx_jobid = (u_char *) JOBIDUNKNOWN;
+        afc->mctx_jobid = (unsigned char *) JOBIDUNKNOWN;
     }
 
     /* if requested, verify RFC5322-required headers (RFC5322 3.6) */
@@ -3575,7 +3496,7 @@ mlfi_eoh(SMFICTX *ctx)
 */
 
 sfsistat
-mlfi_body(SMFICTX *ctx, u_char *bodyp, size_t bodylen)
+mlfi_body(SMFICTX *ctx, unsigned char *bodyp, size_t bodylen)
 {
     int                 status;
     msgctx              afc;
@@ -3734,7 +3655,7 @@ mlfi_eom(SMFICTX *ctx)
 
     if (strcmp((char *) afc->mctx_jobid, JOBIDUNKNOWN) == 0)
     {
-        afc->mctx_jobid = (u_char *) arcf_getsymval(ctx, "i");
+        afc->mctx_jobid = (unsigned char *) arcf_getsymval(ctx, "i");
         if (afc->mctx_jobid == NULL || afc->mctx_jobid[0] == '\0')
         {
             if (no_i_whine && conf->conf_dolog)
@@ -3742,7 +3663,7 @@ mlfi_eom(SMFICTX *ctx)
                 syslog(LOG_WARNING, "WARNING: symbol 'i' not available");
                 no_i_whine = false;
             }
-            afc->mctx_jobid = (u_char *) JOBIDUNKNOWN;
+            afc->mctx_jobid = (unsigned char *) JOBIDUNKNOWN;
         }
     }
 
@@ -4003,7 +3924,7 @@ mlfi_eom(SMFICTX *ctx)
         snprintf(xfhdr, ARC_MAXHEADER, "%s%s v%s %s %s",
                  cc->cctx_noleadspc ? " " : "", ARCF_PRODUCT, VERSION, hostname,
                  afc->mctx_jobid != NULL ? afc->mctx_jobid
-                                         : (u_char *) JOBIDUNKNOWN);
+                                         : (unsigned char *) JOBIDUNKNOWN);
 
         if (arcf_insheader(ctx, 0, SWHEADERNAME, xfhdr) != MI_SUCCESS)
         {
@@ -4073,7 +3994,7 @@ mlfi_close(SMFICTX *ctx)
 
         pthread_mutex_unlock(&conf_lock);
 
-        free(cc);
+        ARC_FREE(cc);
         arcf_setpriv(ctx, NULL);
     }
 
@@ -4166,9 +4087,9 @@ main(int argc, char **argv)
     int  filemask = -1;
     int  mdebug = 0;
 #ifdef HAVE_SMFI_VERSION
-    u_int mvmajor;
-    u_int mvminor;
-    u_int mvrelease;
+    unsigned int mvmajor;
+    unsigned int mvminor;
+    unsigned int mvrelease;
 #endif /* HAVE_SMFI_VERSION */
     time_t         now;
     gid_t          gid = (gid_t) -1;
@@ -4183,9 +4104,6 @@ main(int argc, char **argv)
     char          *chrootdir = NULL;
     char          *p;
     char          *pidfile = NULL;
-#ifdef POPAUTH
-    char *popdbfile = NULL;
-#endif /* POPAUTH */
     char          *testfile = NULL;
     struct config *cfg = NULL;
     char          *end;
@@ -4349,10 +4267,10 @@ main(int argc, char **argv)
 
     if (conffile != NULL)
     {
-        u_int line = 0;
-        char *missing;
-        char *deprecated = NULL;
-        char  path[MAXPATHLEN + 1];
+        unsigned int line = 0;
+        char        *missing;
+        char        *deprecated = NULL;
+        char         path[MAXPATHLEN + 1];
 
         cfg = config_load(conffile, arcf_config, &line, path, sizeof path,
                           &deprecated);

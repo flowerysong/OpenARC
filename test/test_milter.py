@@ -177,6 +177,27 @@ def test_milter_mode_s(run_miltertest):
     assert res['headers'][2] == ['ARC-Authentication-Results', ' i=2; example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1']
 
 
+def test_milter_resign_s(run_miltertest):
+    """Extend the chain as much as possible in pure signing mode"""
+    res = run_miltertest()
+
+    headers = []
+    for i in range(2, 52):
+        headers = [*res['headers'], *headers]
+        res = run_miltertest(headers)
+
+        if i <= 50:
+            assert res['headers'][2] == ['ARC-Authentication-Results', f' i={i}; example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1']
+            assert 'cv=pass' in res['headers'][0][1]
+
+            # quick and dirty parsing
+            ams = {x[0].strip(): x[1].strip() for x in [y.split('=', 1) for y in ''.join(res['headers'][1][1].splitlines()).split(';')]}
+            ams_h = [x.strip() for x in ams['h'].lower().split(':')]
+            assert not any(x in ams_h for x in ['authentication-results', 'arc-seal', 'arc-message-signature', 'arc-authentication-results'])
+        else:
+            assert len(res['headers']) == 0
+
+
 def test_milter_mode_v(run_miltertest):
     """Verify mode"""
     res = run_miltertest()

@@ -838,13 +838,12 @@ arc_init(void)
 {
     ARC_LIB *lib;
 
-    lib = ARC_MALLOC(sizeof *lib);
+    lib = ARC_CALLOC(1, sizeof *lib);
     if (lib == NULL)
     {
         return lib;
     }
 
-    memset(lib, '\0', sizeof *lib);
     lib->arcl_minkeysize = ARC_DEFAULT_MINKEYSIZE;
     lib->arcl_flags = ARC_LIBFLAGS_DEFAULT;
 
@@ -854,13 +853,12 @@ arc_init(void)
     (lib)->arcl_flist[FEATURE_INDEX((x))] |= (1 << FEATURE_OFFSET(x))
 
     lib->arcl_flsize = (FEATURE_INDEX(ARC_FEATURE_MAX)) + 1;
-    lib->arcl_flist = ARC_MALLOC(sizeof(unsigned int) * lib->arcl_flsize);
+    lib->arcl_flist = ARC_CALLOC(lib->arcl_flsize, sizeof(unsigned int));
     if (lib->arcl_flist == NULL)
     {
         ARC_FREE(lib);
         return NULL;
     }
-    memset(lib->arcl_flist, '\0', sizeof(unsigned int) * lib->arcl_flsize);
 
     lib->arcl_dns_callback = NULL;
     lib->arcl_dns_service = NULL;
@@ -1545,14 +1543,13 @@ arc_process_set(ARC_MESSAGE    *msg,
     }
     strlcpy((char *) hcopy, (char *) str, len + 1);
 
-    set = ARC_MALLOC(sizeof(ARC_KVSET));
+    set = ARC_CALLOC(1, sizeof(ARC_KVSET));
     if (set == NULL)
     {
         ARC_FREE(hcopy);
         arc_error(msg, "unable to allocate %d byte(s)", sizeof(ARC_KVSET));
         return ARC_STAT_INTERNAL;
     }
-    memset(set, '\0', sizeof(ARC_KVSET));
 
     set->set_udata = data;
     set->set_type = type;
@@ -2312,13 +2309,12 @@ arc_validate_msg(ARC_MESSAGE *msg, unsigned int setnum)
 
     /* verify the signature's "bh" against our computed one */
     b64bhlen = BASE64SIZE(bhlen);
-    b64bh = ARC_MALLOC(b64bhlen + 1);
+    b64bh = ARC_CALLOC(1, b64bhlen + 1);
     if (b64bh == NULL)
     {
         arc_error(msg, "unable to allocate %d bytes", b64bhlen + 1);
         return ARC_STAT_INTERNAL;
     }
-    memset(b64bh, '\0', b64bhlen + 1);
     elen = arc_base64_encode(bh, bhlen, b64bh, b64bhlen);
     if (elen != strlen(b64bhtag) || strcmp((char *) b64bh, b64bhtag) != 0)
     {
@@ -2440,7 +2436,7 @@ arc_message(ARC_LIB              *lib,
         return NULL;
     }
 
-    msg = ARC_MALLOC(sizeof *msg);
+    msg = ARC_CALLOC(1, sizeof *msg);
     if (msg == NULL)
     {
         if (err != NULL)
@@ -2449,8 +2445,6 @@ arc_message(ARC_LIB              *lib,
         }
         return NULL;
     }
-
-    memset(msg, '\0', sizeof *msg);
 
     msg->arc_library = lib;
     if (lib->arcl_fixedtime != 0)
@@ -2798,9 +2792,9 @@ arc_eoh_verify(ARC_MESSAGE *msg)
     */
 
     /* sets already in the chain, validation */
-    msg->arc_sealcanons = ARC_MALLOC(msg->arc_nsets * sizeof(ARC_CANON *));
-    msg->arc_hdrcanons = ARC_MALLOC(msg->arc_nsets * sizeof(ARC_CANON *));
-    msg->arc_bodycanons = ARC_MALLOC(msg->arc_nsets * sizeof(ARC_CANON *));
+    msg->arc_sealcanons = ARC_CALLOC(msg->arc_nsets, sizeof(ARC_CANON *));
+    msg->arc_hdrcanons = ARC_CALLOC(msg->arc_nsets, sizeof(ARC_CANON *));
+    msg->arc_bodycanons = ARC_CALLOC(msg->arc_nsets, sizeof(ARC_CANON *));
 
     if (msg->arc_sealcanons == NULL || msg->arc_hdrcanons == NULL ||
         msg->arc_bodycanons == NULL)
@@ -3031,12 +3025,11 @@ arc_eoh(ARC_MESSAGE *msg)
     /* build up the array of ARC sets, for use later */
     if (nsets > 0)
     {
-        msg->arc_sets = ARC_MALLOC(sizeof(struct arc_set) * nsets);
+        msg->arc_sets = ARC_CALLOC(nsets, sizeof(struct arc_set));
         if (msg->arc_sets == NULL)
         {
             return ARC_STAT_NORESOURCE;
         }
-        memset(msg->arc_sets, '\0', sizeof(struct arc_set) * nsets);
     }
 
     for (set = arc_set_first(msg, ARC_KVSETTYPE_ANY); set != NULL;
@@ -3611,7 +3604,7 @@ arc_getseal(ARC_MESSAGE         *msg,
     /* base64 encode it */
     b64siglen = siglen * 3 + 5;
     b64siglen += (b64siglen / 60);
-    b64sig = ARC_MALLOC(b64siglen);
+    b64sig = ARC_CALLOC(1, b64siglen);
     if (b64sig == NULL)
     {
         arc_error(msg, "can't allocate %d bytes for base64 signature",
@@ -3620,7 +3613,6 @@ arc_getseal(ARC_MESSAGE         *msg,
         goto error;
     }
 
-    memset(b64sig, '\0', b64siglen);
     rstatus = arc_base64_encode(sigout, siglen, b64sig, b64siglen);
     if (rstatus == -1)
     {

@@ -615,23 +615,6 @@ extern int arc_chain_custody_str(ARC_MESSAGE   *msg,
 
 extern int arc_chain_oldest_pass(ARC_MESSAGE *);
 
-/*
-**  ARC_MAIL_PARSE -- extract the local-part and domain-name from a structured
-**                    header field
-**
-**  Parameters:
-**  	addr -- the header to parse; see RFC2822 for format
-**  	user -- local-part of the parsed header (returned)
-**  	domain -- domain part of the parsed header (returned)
-**
-**  Return value:
-**  	0 on success; other on error (see source)
-*/
-
-extern int arc_mail_parse(unsigned char  *addr,
-                          unsigned char **user,
-                          unsigned char **domain);
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

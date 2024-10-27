@@ -338,7 +338,7 @@ arcf_test_getsymval(void *ctx, char *sym)
 
     snprintf(symout, sizeof symout, "DEBUG-%s", sym);
 
-    return strdup(symout);
+    return ARC_STRDUP(symout);
 }
 
 /*
@@ -530,7 +530,8 @@ arcf_testfile(ARC_LIB             *libopenarc,
 
             if (len + buflen >= (int) sizeof buf - 3)
             {
-                ms = mlfi_body((SMFICTX *) tctx, (u_char *) buf, strlen(buf));
+                ms = mlfi_body((SMFICTX *) tctx, (unsigned char *) buf,
+                               strlen(buf));
                 if (MLFI_OUTPUT(ms, tverbose))
                 {
                     fprintf(stderr, "%s: %s: mlfi_body() returned %s\n",
@@ -618,7 +619,7 @@ arcf_testfile(ARC_LIB             *libopenarc,
     /* some body left */
     if (!inheaders && buf[0] != '\0')
     {
-        ms = mlfi_body((SMFICTX *) tctx, (u_char *) buf, strlen(buf));
+        ms = mlfi_body((SMFICTX *) tctx, (unsigned char *) buf, strlen(buf));
         if (MLFI_OUTPUT(ms, tverbose))
         {
             fprintf(stderr, "%s: %s: mlfi_body() returned %s\n", progname, file,
@@ -669,7 +670,7 @@ arcf_testfiles(ARC_LIB *libopenarc, char *flist, int verbose)
     tverbose = verbose;
 
     /* set up a fake SMFICTX */
-    tctx = (struct test_context *) malloc(sizeof(struct test_context));
+    tctx = ARC_MALLOC(sizeof(struct test_context));
     if (tctx == NULL)
     {
         fprintf(stderr, "%s: malloc(): %s\n", progname, strerror(errno));
