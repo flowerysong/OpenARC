@@ -382,6 +382,7 @@ AC_SUBST([SYSCONFDIR])
 AC_CONFIG_FILES([
     Makefile
     contrib/Makefile
+    contrib/openarc-keygen.1
     contrib/init/Makefile
     contrib/init/generic/Makefile
     contrib/init/redhat/Makefile

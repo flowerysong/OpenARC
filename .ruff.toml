@@ -1,3 +1,4 @@
+include = ["contrib/openarc-keygen"]
 line-length = 160
 
 [lint]

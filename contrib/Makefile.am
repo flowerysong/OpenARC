@@ -2,3 +2,6 @@
 # All rights reserved.
 
 SUBDIRS = init spec systemd
+
+dist_bin_SCRIPTS = openarc-keygen
+man_MANS = openarc-keygen.1

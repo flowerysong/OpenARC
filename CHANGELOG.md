@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - `oldest-pass` processing per [RFC 8617 section 5.2](https://datatracker.ietf.org/doc/html/rfc8617#section-5.2).
+- `openarc-keygen`
 - libopenarc - `arc_chain_oldest_pass()`
 - milter - `AuthResIP` configuration option.
 - milter - `RequireSafeKeys` configuration option.

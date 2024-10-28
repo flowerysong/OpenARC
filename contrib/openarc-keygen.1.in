@@ -1,0 +1,131 @@
+.\" Copyright 2024 OpenARC contributors.
+.\" See LICENSE.
+.Dd 2024-10-30
+.Dt OPENARC-KEYGEN 1
+.Os OpenARC @VERSION@
+
+.Sh NAME
+.Nm openarc-keygen
+.Nd DKIM (and ARC) key generation tool
+
+.Sh SYNOPSIS
+.Nm openarc-keygen
+.Fl d Ar domain
+.Fl s Ar selector
+.Op options
+
+.Sh DESCRIPTION
+.Nm openarc-keygen
+outputs a private key suitable for signing messages using
+.Xr openarc 8
+and also outputs one of several representations of the associated
+public key, which can be used in various ways.
+
+The output filenames are based on the
+.Ar selector
+and
+.Ar domain ;
+the private key will end in ".key" and the public key will end in ".txt".
+
+.Sh OPTIONS
+
+.Bl -tag -width Ds
+.It Fl b , Fl \-bits Ar bits
+Size of RSA key to generate.
+The default is 2048, which is also the recommended minimum size.
+Keys smaller than 1024 bits will almost certainly be rejected by
+downstream evaluators.
+
+.It Fl d , Fl \-domain Ar domain
+The domain which will use this key for signing.
+
+.It Fl D , Fl -directory Ar directory
+Directory to store the keys in.
+If this is not specified the keys will be stored in the current
+working directory.
+
+.It Fl f , Fl \-format Brq Cm bare | Cm testkey | Cm text | Cm zone
+Output format for the public key.
+.Cm bare
+outputs just the key itself, rendering many flags that this program accepts
+irrelevant.
+.Cm testkey
+outputs a line suitable for use in a file pointed to by
+the
+.Cm TestKeys
+option in
+.Xr openarc.conf 5 .
+.Cm text
+outputs a standard textual representation of the key as specified in RFC 6376.
+.Cm zone
+is the default, and outputs a DNS record formatted for use in a zone file.
+
+.It Fl \-fqdn
+When outputting a DNS zone file entry, use the fully qualified domain name
+instead of a relative one.
+
+.It Fl \-hash-algorithms Ar algorithms
+Tag the public key to indicate that it should only be used with
+this colon-separated list of algorithms.
+
+.It Fl h , Fl \-help
+Show a help message and exit.
+
+.It Fl \-no\-subdomains
+Tag the public key to indicate that identities in a signature are
+required to be from this exact domain, not subdomains.
+
+.It Fl n , Fl \-note Ar note
+Free-form text to include in the public key.
+This is intended for humans who are reading the record, and should be
+kept brief if it is used at all.
+
+.It Fl r , Fl \-restrict
+Tag the public key to indicate that it should only be used for email.
+There are not currently any other protocols that might use the key, so
+this does not have any practical effect.
+
+.It Fl s , Fl \-selector Ar selector
+A name for the key.
+
+.It Fl t , Fl \-type Brq Cm rsa | Cm ed25519
+Type of key to generate, defaults to RSA.
+Note that Ed25519 keys are not currently useful for ARC, nor are
+they usable by OpenARC.
+This option is for people who are generating DKIM keys for use with
+other software.
+
+.It Fl \-testing
+Tag the public key to indicate that this domain is testing its
+deployment of the protocol this key is used with.
+This is a signal that you are more interested in receiving feedback,
+it does not affect the handling of messages or signatures.
+
+.El
+
+.Sh NOTES
+A suitable
+.Nm openssl
+executable must be available in the executing user's
+.Ev PATH .
+
+.Sh EXAMPLES
+You may want to use
+.Xr sudo 8
+to run this command as the user that the
+.Xr openarc 8
+daemon is configured to run as, so that the file permissions are correct.
+
+.Dl sudo -u openarc openarc-keygen -D /etc/openarc/keys -d example.com -s 20241004
+
+.Sh SEE ALSO
+.Bl -item
+.It
+.Xr openarc 8
+.It
+.Xr openssl 1
+.It
+RFC6376 - DomainKeys Identified Mail
+.It
+RFC8617 - The Authenticated Received Chain (ARC) Protocol
+.El

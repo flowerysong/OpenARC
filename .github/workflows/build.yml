@@ -46,6 +46,20 @@ jobs:
       - name: Install dependencies
         run: sudo apt install libbsd-dev libidn2-dev libjansson-dev libmilter-dev libssl-dev
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          # 3.8 is listed last because it's the lowest version we support for
+          # tests, so we want to use it as the default.
+          python-version: |
+            3.7
+            3.9
+            3.10
+            3.11
+            3.12
+            3.13
+            3.8
+
       - name: Install Python dependencies
         run: sudo pip install pytest miltertest
 

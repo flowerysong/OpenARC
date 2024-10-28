@@ -13,6 +13,7 @@ Source0: openarc-%{version}.tar.gz
 BuildRequires: gcc
 BuildRequires: libtool
 BuildRequires: make
+BuildRequires: python3-devel
 BuildRequires: pkgconfig(jansson)
 BuildRequires: pkgconfig(libbsd)
 BuildRequires: pkgconfig(openssl)
@@ -57,6 +58,14 @@ Requires: lib%{name}%{?_isa} = %{version}-%{release}
 %description -n libopenarc-devel
 This package contains the static libraries, headers, and other support files
 required for developing applications against libopenarc.
+
+%package -n openarc-tools
+Summary: Utilities related to the ARC protocol
+BuildArch: noarch
+Requires: python3 >= 3.7
+
+%description -n openarc-tools
+This packages contains utilities that may be useful for people deploying ARC.
 
 %prep
 %autosetup -p1
@@ -203,7 +212,8 @@ exit 0
 %else
 %{_initrddir}/%{name}
 %endif
-%{_mandir}/*/*
+%{_mandir}/man5/openarc.conf.5*
+%{_mandir}/man8/openarc.8*
 %{_sbindir}/*
 
 %files -n libopenarc
@@ -215,6 +225,10 @@ exit 0
 %{_includedir}/*
 %{_libdir}/*.so
 %{_libdir}/pkgconfig/*.pc
+
+%files -n openarc-tools
+%{_bindir}/openarc-keygen
+%{_mandir}/man1/openarc-keygen.1*
 
 %changelog
 * %(date "+%a %b %d %Y") (Automated RPM build) - %{version}-%{release}

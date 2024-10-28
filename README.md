@@ -60,6 +60,11 @@ you will also need:
 * [Automake](https://www.gnu.org/software/automake/) >= 1.11.1
 * [libtool](https://www.gnu.org/software/libtool/) >= 2.2.6
 
+The core OpenARC software will function without it, but tools distributed
+alongside OpenARC (such as `openarc-keygen`) may require:
+
+* Python >= 3.7
+
 ### DNF-based systems
 
 ```
