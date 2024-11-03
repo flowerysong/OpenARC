@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 - milter - `AuthResIP` configuration option.
 - milter - `RequireSafeKeys` configuration option.
 - milter - `MinimumKeySizeRSA` configuration option.
+- milter - `ResponseDisabled`, `ResponseUnable`, and `ResponseUnwilling`
+  configuration options.
 
 ### Changed
 - Custom OpenSSL locations must be configured using `OPENSSL_CFLAGS`
@@ -37,6 +39,8 @@ All notable changes to this project will be documented in this file.
   `header.oldest-pass` when appropriate.
 - milter - An `ar-test` program for seeing how `Authentication-Results`
   headers are parsed is built without making you jump through weird hoops.
+- milter - The default behaviour for messages that fail basic validity checks
+  (malformed headers, too many headers) is to reject them.
 
 ### Removed
 - libopenarc - `arc_mail_parse()`

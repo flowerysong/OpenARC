@@ -564,6 +564,12 @@ def test_milter_finalreceiver(run_miltertest):
     assert res['headers'][0][1] == ' example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1 arc.chain="example.com:example.com"'
 
 
+def test_milter_maximumheaders(run_miltertest):
+    """Oversized headers result in message rejection"""
+    with pytest.raises(miltertest.MilterError, match="Unexpected reply to L: \\('r'"):
+        run_miltertest()
+
+
 def test_milter_minimum_key_bits(run_miltertest):
     """A 2048-bit key passes when that is the minimum"""
     res = run_miltertest()
@@ -581,6 +587,18 @@ def test_milter_minimum_key_bits_fail(run_miltertest):
 def test_milter_peerlist(run_miltertest):
     """Connections from peers just get `accept` back immediately"""
     with pytest.raises(miltertest.MilterError, match='unexpected response: a'):
+        run_miltertest()
+
+
+def test_milter_responsedisabled(run_miltertest):
+    """Configured to reject messages from peers"""
+    with pytest.raises(miltertest.MilterError, match='unexpected response: r'):
+        run_miltertest()
+
+
+def test_milter_responseunwilling(run_miltertest):
+    """Configured to accept messages with too many headers"""
+    with pytest.raises(miltertest.MilterError, match="Unexpected reply to L: \\('a'"):
         run_miltertest()
 
 

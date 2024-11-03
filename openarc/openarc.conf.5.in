@@ -248,6 +248,34 @@ containing the process ID.
 Controls whether the filter requires that private keys have safe file
 permissions.
 
+.It Cm ResponseDisabled Pq string
+.Brq Cm accept | discard | reject | tempfail
+
+Response to send after determining that this message is one that
+the filter is configured not to process.
+See
+.Cm SealHeaderChecks
+and
+.Cm PeerList .
+The default is
+.Cm accept .
+
+.It Cm ResponseUnable Pq string
+.Brq Cm accept | discard | reject | tempfail
+
+Response to send after an internal error occurs that makes it
+impossible to finish processing the message.
+The default is
+.Cm tempfail .
+
+.It Cm ResponseUnwilling Pq string
+.Brq Cm accept | discard | reject | tempfail
+
+Response to send after a message fails basic validity checks, such as
+.Cm MaximumHeaders .
+The default is
+.Cm reject .
+
 .It Cm SealHeaderChecks Pq string
 Identifies a file containing header checks that should be done to determine
 whether to seal a message.
@@ -268,7 +296,7 @@ Use
 .Ql openarc \-V
 to see the list of supported algorithms.
 The default is
-.Cm rsa-sha256.
+.Cm rsa-sha256 .
 Other values are not useful if you are intending to interoperate with other
 implementers of the ARC protocol.
 

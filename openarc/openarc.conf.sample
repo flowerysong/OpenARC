@@ -216,6 +216,30 @@ KeyFile			/var/db/dkim/example.private
 
 # RequireSafeKeys yes
 
+##  ResponseDisabled { accept | discard | reject | tempfail }
+##      default "accept"
+##
+##  Response to send after determining that this message is one that
+##  the filter is configured not to process.
+
+# ResponseDisabled accept
+
+##  ResponseUnable { accept | discard | reject | tempfail }
+##      default "tempfail"
+##
+##  Response to send after an internal error occurs that makes it impossible
+##  to finish processing the message.
+
+# ResponseUnable tempfail
+
+##  ResponseUnwilling { accept | discard | reject | tempfail }
+##      default "reject"
+##
+##  Response to send after a message fails basic validity checks, such as
+##  MaximumHeaders.
+
+# ResponseUnwilling reject
+
 ##  SealHeaderChecks filename
 ##  	default (none)
 ##

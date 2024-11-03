@@ -135,6 +135,9 @@ struct arcf_config
     size_t          conf_keylen;            /* key length */
     int             conf_maxhdrsz;          /* max. header size */
     int             conf_minkeysz;          /* min. key size */
+    int             conf_ret_disabled;      /* configured not to process */
+    int             conf_ret_unable;        /* internal error */
+    int             conf_ret_unwilling;     /* badly formed message */
     struct config  *conf_data;              /* configuration data */
     ARC_LIB        *conf_libopenarc;        /* shared library instance */
     struct conflist conf_peers;             /* peers hosts */
@@ -219,6 +222,14 @@ struct nametable arcf_chainstates[] = {
     {"pass", ARC_CHAIN_PASS},
     {"fail", ARC_CHAIN_FAIL},
     {NULL,   -1            }
+};
+
+struct nametable arcf_responses[] = {
+    {"accept",   SMFIS_ACCEPT  },
+    {"discard",  SMFIS_DISCARD },
+    {"reject",   SMFIS_REJECT  },
+    {"tempfail", SMFIS_TEMPFAIL},
+    {NULL,       -1            }
 };
 
 /* PROTOTYPES */
@@ -1156,6 +1167,10 @@ arcf_config_new(void)
     new->conf_safekeys = true;
     new->conf_authresip = true;
 
+    new->conf_ret_disabled = SMFIS_ACCEPT;
+    new->conf_ret_unable = SMFIS_TEMPFAIL;
+    new->conf_ret_unwilling = SMFIS_REJECT;
+
     LIST_INIT(&new->conf_peers);
     LIST_INIT(&new->conf_internal);
 
@@ -1541,6 +1556,52 @@ arcf_config_load(struct config      *data,
             char *end;
 
             conf->conf_fixedtime = strtoul(str, &end, 10);
+        }
+
+        str = NULL;
+        config_get(data, "ResponseDisabled", &str, sizeof str);
+        if (str)
+        {
+            int resp = arc_name_to_code(arcf_responses, str);
+            if (resp == -1)
+            {
+                snprintf(err, errlen, "%s: invalid response value", str);
+            }
+            else
+            {
+                conf->conf_ret_disabled = arc_name_to_code(arcf_responses, str);
+            }
+        }
+
+        str = NULL;
+        config_get(data, "ResponseUnable", &str, sizeof str);
+        if (str)
+        {
+            int resp = arc_name_to_code(arcf_responses, str);
+            if (resp == -1)
+            {
+                snprintf(err, errlen, "%s: invalid response value", str);
+            }
+            else
+            {
+                conf->conf_ret_unable = arc_name_to_code(arcf_responses, str);
+            }
+        }
+
+        str = NULL;
+        config_get(data, "ResponseUnwilling", &str, sizeof str);
+        if (str)
+        {
+            int resp = arc_name_to_code(arcf_responses, str);
+            if (resp == -1)
+            {
+                snprintf(err, errlen, "%s: invalid response value", str);
+            }
+            else
+            {
+                conf->conf_ret_unwilling = arc_name_to_code(arcf_responses,
+                                                            str);
+            }
         }
 
         (void) config_get(data, "TestKeys", &conf->conf_testkeys,
@@ -2785,10 +2846,10 @@ mlfi_connect(SMFICTX *ctx, char *host, _SOCK_ADDR *ip)
                 syslog(LOG_ERR, "%s malloc(): %s", host, strerror(errno));
             }
 
+            int retval = curconf->conf_ret_unable;
             pthread_mutex_unlock(&conf_lock);
 
-            /* XXX -- result should be selectable */
-            return SMFIS_TEMPFAIL;
+            return retval;
         }
 
         pthread_mutex_lock(&conf_lock);
@@ -2836,9 +2897,11 @@ mlfi_connect(SMFICTX *ctx, char *host, _SOCK_ADDR *ip)
     {
         if (curconf->conf_dolog)
         {
-            syslog(LOG_INFO, "ignoring connection from %s", host);
+            syslog(
+                LOG_INFO, "peer connection from %s, returning %s", host,
+                arc_code_to_name(arcf_responses, curconf->conf_ret_disabled));
         }
-        return SMFIS_ACCEPT;
+        return curconf->conf_ret_disabled;
     }
 
     /* infer operating mode if not explicitly set */
@@ -2991,15 +3054,13 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
         afc->mctx_hdrbytes + strlen(headerf) + strlen(headerv) + 2 >
             conf->conf_maxhdrsz)
     {
-        /* FIXME: this should be configurable, and it might be better to
-         * default to rejecting the message.
-         */
         if (conf->conf_dolog)
         {
-            syslog(LOG_NOTICE, "too much header data; accepting");
+            syslog(LOG_NOTICE, "too much header data, returning %s",
+                   arc_code_to_name(arcf_responses, conf->conf_ret_unwilling));
         }
 
-        return SMFIS_ACCEPT;
+        return conf->conf_ret_unwilling;
     }
 
     /*
@@ -3026,7 +3087,7 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
         }
 
         arcf_cleanup(ctx);
-        return SMFIS_TEMPFAIL;
+        return conf->conf_ret_unable;
     }
 
     newhdr->hdr_hdr = ARC_STRDUP(headerf);
@@ -3046,7 +3107,7 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
 
             arcf_cleanup(ctx);
 
-            return SMFIS_TEMPFAIL;
+            return conf->conf_ret_unable;
         }
     }
     else
@@ -3111,7 +3172,7 @@ mlfi_header(SMFICTX *ctx, char *headerf, char *headerv)
         ARC_FREE(newhdr->hdr_val);
         ARC_FREE(newhdr);
         arcf_cleanup(ctx);
-        return SMFIS_TEMPFAIL;
+        return conf->conf_ret_unable;
     }
 
     afc->mctx_hdrbytes += strlen(newhdr->hdr_hdr) + 1;
@@ -3359,7 +3420,7 @@ mlfi_eoh(SMFICTX *ctx)
                        afc->mctx_jobid);
             }
 
-            return SMFIS_ACCEPT;
+            return conf->conf_ret_disabled;
         }
     }
 #endif /* USE_JANSSON */
@@ -3381,7 +3442,7 @@ mlfi_eoh(SMFICTX *ctx)
                    afc->mctx_jobid, err);
         }
 
-        return SMFIS_TEMPFAIL;
+        return conf->conf_ret_unable;
     }
 
     for (hdr = afc->mctx_hqhead; hdr != NULL; hdr = hdr->hdr_next)
@@ -3397,7 +3458,7 @@ mlfi_eoh(SMFICTX *ctx)
                            afc->mctx_jobid);
                 }
 
-                return SMFIS_TEMPFAIL;
+                return conf->conf_ret_unable;
             }
         }
         else
@@ -3438,7 +3499,11 @@ mlfi_eoh(SMFICTX *ctx)
                        afc->mctx_jobid, hdr->hdr_hdr);
             }
 
-            return SMFIS_TEMPFAIL;
+            if (status == ARC_STAT_SYNTAX)
+            {
+                return conf->conf_ret_unwilling;
+            }
+            return conf->conf_ret_unable;
         }
     }
 
@@ -3512,7 +3577,7 @@ mlfi_body(SMFICTX *ctx, unsigned char *bodyp, size_t bodylen)
                        afc->mctx_jobid);
             }
 
-            return SMFIS_TEMPFAIL;
+            return conf->conf_ret_unable;
         }
     }
 
@@ -3657,7 +3722,7 @@ mlfi_eom(SMFICTX *ctx)
                 syslog(LOG_ERR, "arc_dstring_new() failed");
             }
 
-            return SMFIS_TEMPFAIL;
+            return conf->conf_ret_unable;
         }
     }
 
@@ -3693,7 +3758,7 @@ mlfi_eom(SMFICTX *ctx)
                    afc->mctx_jobid);
         }
 
-        return SMFIS_TEMPFAIL;
+        return conf->conf_ret_unable;
     }
 
     if (BITSET(ARC_MODE_SIGN, cc->cctx_mode))
@@ -3806,7 +3871,7 @@ mlfi_eom(SMFICTX *ctx)
                        afc->mctx_jobid);
             }
 
-            return SMFIS_TEMPFAIL;
+            return conf->conf_ret_unable;
         }
 
         for (sealhdr = seal; sealhdr != NULL; sealhdr = arc_hdr_next(sealhdr))
@@ -3858,7 +3923,7 @@ mlfi_eom(SMFICTX *ctx)
                        afc->mctx_jobid, "");
             }
 
-            return SMFIS_TEMPFAIL;
+            return conf->conf_ret_unable;
         }
 
         arc_dstring_blank(afc->mctx_tmpstr);
