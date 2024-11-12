@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 ### Fixed
+- Build issues on FreeBSD.
 - libopenarc - `arc_free()` accepts NULL.
 - libopenarc - `c` is not a required tag in `ARC-Message-Signature`.
 

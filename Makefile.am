@@ -105,7 +105,7 @@ openarc_ar_test_SOURCES = \
 	util/arc-nametable.c \
 	util/arc-nametable.h
 
-openarc_ar_test_CPPFLAGS = -I$(srcdir)/libopenarc -I$(srcdir)/util
+openarc_ar_test_CPPFLAGS = -I$(srcdir)/libopenarc -I$(srcdir)/util $(LIBJANSSON_CFLAGS)
 endif
 
 $(DIST_ARCHIVES).sha1: $(DIST_ARCHIVES)
