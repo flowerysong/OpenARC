@@ -307,9 +307,15 @@ AC_ARG_VAR([LIBMILTER_CPPFLAGS], [C preprocessor flags for libmilter headers])
 AC_ARG_VAR([LIBMILTER_LDFLAGS], [linker flags for libmilter library])
 
 AS_IF([test "x$enable_filter" != xno], [
+    saved_CC="$CC"
+    saved_CFLAGS="$CFLAGS"
     saved_CPPFLAGS="$CPPFLAGS"
     saved_LDFLAGS="$LDFLAGS"
     saved_LIBS="$LIBS"
+
+    CC="$PTHREAD_CC"
+    CFLAGS="$PTHREAD_CFLAGS $saved_CFLAGS"
+    LDFLAGS="$PTHREAD_CFLAGS $saved_CFLAGS"
 
     AS_IF([test "x$LIBMILTER_CPPFLAGS" != x], [CPPFLAGS="$CPPFLAGS $LIBMILTER_CPPFLAGS"])
     AS_IF([test "x$LIBMILTER_LDFLAGS" != x], [LDFLAGS="$LDFLAGS $LIBMILTER_LDFLAGS"])
@@ -333,6 +339,8 @@ AS_IF([test "x$enable_filter" != xno], [
     AC_CHECK_FUNC([smfi_version],
         AC_DEFINE([HAVE_SMFI_VERSION], 1, [Define if libmilter has smfi_version()]))
 
+    CC="$saved_CC"
+    CFLAGS="$saved_CFLAGS"
     CPPFLAGS="$saved_CPPFLAGS"
     LDFLAGS="$saved_LDFLAGS"
     LIBS="$saved_LIBS"
