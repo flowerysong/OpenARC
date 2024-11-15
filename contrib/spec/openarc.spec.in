@@ -153,8 +153,7 @@ EOF
 
 %pre
 if ! getent passwd %{name} >/dev/null 2>&1; then
-    %{_sbindir}/useradd -M -d %{_localstatedir}/lib/%{name} -r -s /sbin/nologin
-%{name}
+    %{_sbindir}/useradd -M -d %{_localstatedir}/lib/%{name} -r -s /sbin/nologin %{name}
     if ! getent group %{name} >/dev/null; then
         %{_sbindir}/groupadd %{name}
         %{_sbindir}/usermod -g %{name} %{name}
