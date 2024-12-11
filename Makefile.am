@@ -123,4 +123,7 @@ dist-hook:
 rpm: dist-gzip
 	rpmbuild -ta $(distdir).tar.gz
 
+srpm: dist-gzip
+	rpmbuild -ts $(distdir).tar.gz
+
 .PHONY: push
