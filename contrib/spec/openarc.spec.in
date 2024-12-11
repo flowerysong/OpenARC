@@ -17,6 +17,7 @@ BuildRequires: python3-devel
 BuildRequires: pkgconfig(jansson)
 BuildRequires: pkgconfig(libbsd)
 BuildRequires: pkgconfig(openssl)
+BuildRequires: pkgconfig(libidn2)
 
 # sendmail-devel renamed for F25+
 %if 0%{?fedora} > 25
