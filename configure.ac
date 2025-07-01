@@ -16,7 +16,7 @@ m4_define([VERSION_RELEASE], 1)
 m4_define([VERSION_MAJOR_REV], 2)
 m4_define([VERSION_MINOR_REV], 2)
 # leave this empty for an actual release
-m4_define([VERSION_PRE], [pre0])
+m4_define([VERSION_PRE], [])
 
 #
 # Library version, only update at release time

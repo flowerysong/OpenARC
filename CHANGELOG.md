@@ -2,13 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## [1.2.2](https://github.com/flowerysong/OpenARC/releases/tag/v1.2.2) - 2025-07-01
 
-### Added
+Mainly documentation changes.
 
 ### Changed
-
-### Fixed
+- contrib - modernized systemd service.
 
 ## [1.2.1](https://github.com/flowerysong/OpenARC/releases/tag/v1.2.1) - 2025-01-06
 
