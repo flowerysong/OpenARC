@@ -5,11 +5,9 @@
 .Dd @BUILD_DATE@
 .Dt OPENARC 8
 .Os OpenARC @VERSION@
-
 .Sh NAME
 .Nm openarc
 .Nd ARC signing and verifying filter for MTAs
-
 .Sh SYNOPSIS
 .Nm openarc
 .Op Fl c Ar configfile
@@ -20,13 +18,11 @@
 .Op Fl u Ar userid Op : Ar group
 .Op Fl v
 .Op Fl V
-
 .Sh DESCRIPTION
 .Nm
 implements the proposed ARC (Authenticated Received Chain) standard
 for confirming handling and authentication of a message as it is
 handled for delivery.
-
 .Nm
 uses the
 .Em milter
@@ -34,12 +30,11 @@ interface, originally distributed as part of version 8.11 of
 .Xr sendmail 8 ,
 to provide ARC signing and/or verifying service for mail transiting
 a milter-aware MTA.
-
 .Sh OPTIONS
-
 .Bl -tag -width Ds
 .It Fl c Ar configfile
-Read the named configuration file.  See the
+Read the named configuration file.
+See the
 .Xr openarc.conf 5
 man page for details.
 Values in the configuration file are overridden when their equivalents
@@ -49,19 +44,16 @@ The default is to read a configuration file from
 .Pa @SYSCONFDIR@/openarc.conf
 if one exists.
 If no configuration file is found, default values are used.
-
 .It Fl f
 Normally
 .Nm
 forks and exits immediately, leaving the service running in the background.
 This flag suppresses that behaviour so that it runs in the foreground.
-
 .It Fl n
 Parse the configuration file and command line arguments, reporting any
 errors found, and then exit.
 The exit value will be 0 if the filter would start up without complaint,
 and non-zero otherwise.
-
 .It Fl p Ar socketspec
 Specifies the socket that should be established by the filter to receive
 connections from
@@ -71,14 +63,15 @@ in order to provide service.
 is in one of two forms:
 .Ar local:path
 which creates a UNIX domain socket at the specified
-.Ar path,
+.Ar path ,
 or
 .Ar inet:port Op @host
 or
 .Ar inet6:port Op @host
 which creates a TCP socket on the specified
 .Ar port
-using the requested protocol family.  If the
+using the requested protocol family.
+If the
 .Ar host
 is not given as either a hostname or an IP address, the socket will be
 listening on all interfaces.
@@ -88,27 +81,23 @@ If neither socket type is specified,
 is assumed, meaning the parameter is interpreted as a path at which
 the socket should be created.
 This parameter is mandatory either here or in the configuration file.
-
 .It Fl P Ar pidfile
 Specifies a file into which the filter should write its process ID at startup.
-
 .It Fl u Ar userid Op Ar :group
 Attempts to become the specified
 .Ar userid
-before starting operations.  The process will be assigned all of the groups
-and primary group ID of the named
+before starting operations.
+The process will be assigned all of the groups and primary group ID of the named
 .Ar userid
 unless an alternate
 .Ar group
 is specified.
-
 .It Fl V
 Print the version number and build-time options, then exit.
-
+.El
 .Sh EXIT STATUS
 Filter exit status codes are selected according to
 .Xr sysexits 3 .
-
 .Sh SEE ALSO
 .Bl -item
 .It

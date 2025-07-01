@@ -5,29 +5,26 @@
 .Dd @BUILD_DATE@
 .Dt OPENARC.CONF 5
 .Os OpenARC @VERSION@
-
 .Sh NAME
 .Nm openarc.conf
 .Nd Configuration file for openarc
-
 .Sh LOCATION
 .Pa @SYSCONFDIR@/openarc.conf
-
 .Sh DESCRIPTION
 .Xr openarc 8
 implements the ARC (Authenticated Received Chain)
 specification for verifying authentication and handling of messages as
 they are routed to their destinations.
 This is its configuration file.
-
+.Pp
 Blank lines are ignored.
 Lines containing a hash ("#") character are truncated at the hash character
 to allow for comments in the file.
-
+.Pp
 Other content should be the name of a parameter, followed by white space,
 followed by the value of that parameter.
 Each parameter must be on a separate line.
-
+.Pp
 For parameters that are Boolean in nature, only the first byte of
 the value is processed.
 For positive values, the following are accepted:
@@ -36,51 +33,45 @@ For positive values, the following are accepted:
 .Cm Y ,
 .Cm y ,
 .Cm 1 .
-
+.Pp
 For negative values, the following are accepted:
 .Cm F ,
 .Cm f ,
 .Cm N ,
 .Cm n ,
 .Cm 0 .
-
+.Pp
 See the
 .Xr openarc 8
 man page for details about how and when the configuration file contents
 are reloaded.
-
+.Pp
 Unless otherwise stated, boolean values default to
 .Cm false ,
 integer values default to
 .Cm 0 ,
 and string and dataset values default to being undefined.
-
 .Sh PARAMETERS
 .Bl -tag -width Ds
-
 .It Cm AuthResIP Pq boolean
 Controls whether Authentication-Results headers include the remote IP.
 The default is
 .Cm true .
-
 .It Cm AuthservID Pq string
 .Ar authserv-id
 to use in Authentication-Results headers.
-
 .It Cm AutoRestart Pq boolean
 Automatically re-start on failures.
 Use with caution; if the filter fails instantly after it starts, this can
 cause a tight
 .Xr fork 2
 loop.
-
 .It Cm AutoRestartCount Pq integer
 Sets the maximum automatic restart count.
 After this number of automatic restarts, the filter will give up and terminate.
 A value of
 .Cm 0
 implies no limit; this is the default.
-
 .It Cm AutoRestartRate Pq string
 Sets the maximum automatic restart rate.
 If the filter begins restarting faster than the rate defined here, it will
@@ -97,19 +88,16 @@ is an integer and
 .Ar u
 defines the units thus represented ("s" or "S" for seconds, the default;
 "m" or "M" for minutes; "h" or "H" for hours; "d" or "D" for days).  For
-example, a value of "10/1h" limits the restarts to 10 in one hour.  There
-is no default, meaning restart rate is not limited.
-
+example, a value of "10/1h" limits the restarts to 10 in one hour.
+There is no default, meaning restart rate is not limited.
 .It Cm Background Pq boolean
 Causes
 .Xr openarc 8
 to fork and exit immediately, leaving the service running in the background.
 The default is
 .Cm true .
-
 .It Cm BaseDirectory Pq string
 Directory to switch to before beginning operation.
-
 .It Cm Canonicalization Pq string
 Selects the canonicalization method(s) to be used when signing messages.
 When verifying, the message's ARC-Message-Signature: header field specifies
@@ -118,44 +106,40 @@ The recognized values are
 .Cm relaxed
 and
 .Cm simple
-as defined by the DKIM specification.  The default is
-.Cm relaxed/simple.
+as defined by the DKIM specification.
+The default is
+.Cm relaxed/simple .
 The value may include two different canonicalizations separated by a
 slash ("/") character, in which case the first will be applied to the
 header and the second to the body.
-
 .It Cm ChangeRootDirectory Pq string
 Requests that the operating system change the effective root directory
 of the process to the one specified here prior to beginning execution.
 .Xr chroot 2
-requires superuser access. A warning will be generated if
+requires superuser access.
+A warning will be generated if
 .Cm UserID
 is not also set.
-
 .It Cm Domain Pq string
-Domain to use when signing messages. Required for signing.
-
+Domain to use when signing messages.
+Required for signing.
 .It Cm EnableCoredumps Pq boolean
 On systems that have such support, make an explicit request to the kernel
 to dump cores when the filter crashes for some reason.
 Some modern UNIX systems suppress core dumps during crashes for security
 reasons if the user ID has changed during the lifetime of the process.
 Currently only supported on Linux.
-
 .It Cm FinalReceiver Pq boolean
 Add a non-standard
 .Cm arc.chain
 field to the Authentication-Results header, showing the domains
 present in the ARC chain.
-
 .It Cm FixedTimestamp Pq string
 Used for testing.
 This is not useful in a production environment.
-
 .It Cm Include Pq string
 Names a file to be opened and read as an additional configuration file.
 Nesting is allowed to a maximum of five levels.
-
 .It Cm InternalHosts Pq dataset
 Identifies a set of hosts whose connections should be treated as
 "internal" by this filter.
@@ -165,34 +149,29 @@ trusted to be correct and authentic, meaning they will be assumed to
 contain the correct chain status when generating an outgoing seal.
 See the description of "PeerList" for a description of the supported format.
 If no set is provided, "127.0.0.1" is added to the list by default.
-
 .It Cm KeepTemporaryFiles Pq boolean
 Preserve temporary files generated during signing or verification for
 debugging purposes.
 This can use up disk space very quickly on busy systems.
-
 .It Cm KeyFile Pq string
-Path to the private key to use when signing. Required for signing.
-
+Path to the private key to use when signing.
+Required for signing.
 .It Cm MaximumHeaders Pq integer
 Disable processing for messages where the header section is larger than this
 value (in bytes.)
 .Cm 0
 disables this check, the default is
 .Cm 65536 .
-
 .It Cm MilterDebug Pq integer
 Sets the debug level to be requested from the milter library.
 The default is
 .Cm 0 .
-
 .It Cm MinimumKeySizeRSA Pq integer
 Disallows signatures whose keys are smaller than the specified size,
-regardless of whether they would otherwise be valid. If this is not
-set the library's default (which is currently
+regardless of whether they would otherwise be valid.
+If this is not set the library's default (which is currently
 .Cm 1024 )
 will be used.
-
 .It Cm Mode Pq string
 Selects the operating mode(s) for this filter.
 If the string contains the character "s", the filter will seal messages
@@ -206,7 +185,6 @@ per-connection basis based on the entries in the
 .Cm InternalHosts
 list; connections from internal hosts will be assigned to signing mode,
 and all others will be assigned to verify mode.
-
 .It Cm OversignHeaders Pq string
 Specifies a comma-separated list of header field names that should be
 included in all signature header lists (the "h=" tag) once more than the
@@ -220,23 +198,22 @@ the verified message were different and the verification would fail.
 Note that listing a field name here and not listing it in the
 .Cm SignHeaders
 list is likely to generate invalid signatures.
-
 .It Cm PeerList Pq dataset
 Identifies a set of "peers" that identifies clients whose connections
-should be accepted without processing by this filter.  The set
-should contain on each line a hostname, domain name (e.g. ".example.com"),
-IP address, an IPv6 address (including an IPv4 mapped address), or a
-CIDR-style IP specification (e.g. "192.168.1.0/24").  An entry beginning
-with a bang ("!") character means "not", allowing exclusions of specific
-hosts that are otherwise members of larger sets.  Host and domain names are
-matched first, then the IP or IPv6 address depending on the connection
-type.  More precise entries are preferred over less precise ones, i.e.
-"192.168.1.1" will match before "!192.168.1.0/24".  The text form of IPv6
-addresses will be forced to lowercase when queried (RFC5952), so the contents
-of this data set should also use lowercase.  The IP address portion of an
-entry may optionally contain square brackets; both forms (with and without)
-will be checked.
-
+should be accepted without processing by this filter.
+The set should contain on each line a hostname, domain name (e.g.
+".example.com"), IP address, an IPv6 address (including an IPv4 mapped
+address), or a CIDR-style IP specification (e.g. "192.168.1.0/24").
+An entry beginning with a bang ("!") character means "not", allowing exclusion
+of specific hosts that are otherwise members of larger sets.
+Host and domain names are matched first, then the IP or IPv6 address depending
+on the connection type.
+More precise entries are preferred over less precise ones, e.g. "192.168.1.1"
+will match before "!192.168.1.0/24".
+The text form of IPv6 addresses will be forced to lowercase when queried
+(RFC5952), so the contents of this data set should also use lowercase.
+The IP address portion of an entry may optionally contain square brackets;
+both forms (with and without) will be checked.
 .It Cm PermitAuthenticationOverrides Pq boolean
 Controls whether a previous Authentication-Result with the same
 .Ar authserv-id
@@ -245,20 +222,16 @@ The default is
 .Cm false
 because this can be unsafe unless you have taken steps to ensure that
 the Authentication-Result headers seen by the filter are legitimate.
-
 .It Cm PidFile Pq string
 Specifies the path to a file that should be created at process start
 containing the process ID.
-
 .It Cm RequireSafeKeys Pq boolean
 Controls whether the filter requires that private keys have safe file
 permissions.
 The default is
 .Cm true .
-
 .It Cm ResponseDisabled Pq string
 .Brq Cm accept | discard | reject | tempfail
-
 Response to send after determining that this message is one that
 the filter is configured not to process.
 See
@@ -267,23 +240,18 @@ and
 .Cm PeerList .
 The default is
 .Cm accept .
-
 .It Cm ResponseUnable Pq string
 .Brq Cm accept | discard | reject | tempfail
-
 Response to send after an internal error occurs that makes it
 impossible to finish processing the message.
 The default is
 .Cm tempfail .
-
 .It Cm ResponseUnwilling Pq string
 .Brq Cm accept | discard | reject | tempfail
-
 Response to send after a message fails basic validity checks, such as
 .Cm MaximumHeaders .
 The default is
 .Cm reject .
-
 .It Cm SealHeaderChecks Pq string
 Identifies a file containing header checks that should be done to determine
 whether to seal a message.
@@ -294,10 +262,9 @@ any instance of the named header field exists and has a value matching the
 provided regular expression.
 If the value of an instance appears to be a JSON list, then the regular
 expression is applied to all strings in the list.
-
 .It Cm Selector Pq string
-Selector to use when signing messages. Required for signing.
-
+Selector to use when signing messages.
+Required for signing.
 .It Cm SignatureAlgorithm Pq string
 Selects the signing algorithm to use when generating signatures.
 Use
@@ -307,7 +274,6 @@ The default is
 .Cm rsa-sha256 .
 Other values are not useful if you are intending to interoperate with other
 implementers of the ARC protocol.
-
 .It Cm SignatureTTL Pq integer
 Specifies the amount of time (in seconds) before generated signatures expire.
 The default is
@@ -316,7 +282,6 @@ for no expiration.
 You probably should not set this below
 .Cm 604800
 in production deployments.
-
 .It Cm SignHeaders Pq string
 Specifies the set of header fields that should be included when generating
 signatures.
@@ -326,13 +291,12 @@ If the list omits any header field that is mandated by the ARC specification,
 those fields are implicitly added.
 By default, those fields listed in the DKIM specification as
 "SHOULD" be signed (RFC6376, Section 5.4) will be signed by the filter.
-
 .It Cm Socket Pq string
 Specifies the socket that should be established by the filter to receive
 connections from the MTA.
 .Ar socketspec
 is in one of two forms:
-.Cm local:path,
+.Cm local:path ,
 which creates a UNIX domain socket at the specified
 .Ar path ,
 or
@@ -341,37 +305,33 @@ or
 .Ar inet6:port[@host]
 which creates a TCP socket on the specified
 .Ar port
-and in the specified protocol family.  If the
+and in the specified protocol family.
+If the
 .Ar host
 is not given as either a hostname or an IP address, the socket will be
-listening on all interfaces.  A literal IP address must be enclosed in
-square brackets.  This option is mandatory either in the configuration file or
-on the command line.
-
+listening on all interfaces.
+A literal IP address must be enclosed in square brackets.
+This option is mandatory either in the configuration file or on
+the command line.
 .It Cm SoftwareHeader Pq boolean
 Add an ARC-Filter header advertising the filter name and version.
-
 .It Cm Syslog Pq boolean
 Log interesting activity to
 .Xr syslog 3 .
-
 .It Cm SyslogFacility Pq string
 Use the named facility when logging via
 .Xr syslog 3 .
 The default is
 .Cm mail .
-
 .It Cm TemporaryDirectory Pq string
 Directory to use when creating temporary files.
 The default is
 .Pa /tmp
-
 .It Cm TestKeys Pq string
 Used for testing.
 Name of a file containing static DKIM records that will be used
 for validation instead of live DNS lookups, one per line.
 This is not useful in a production environment.
-
 .It Cm UMask Pq integer
 Requests a specific permissions mask to be used for file creation.
 This only applies to creation of the socket when
@@ -381,18 +341,17 @@ specifies a UNIX domain socket, and to the
 (if any).  See
 .Xr umask 2
 for more information.
-
 .It Cm UserID Pq string
 Attempts to become the specified userid before starting operations.
 The value is of the form
-.Ar userid[:group].
+.Ar userid[:group] .
 The process will be assigned all of the groups and primary group ID of
 the named
 .Ar userid
 unless an alternate
 .Ar group
 is specified.
-
+.El
 .Sh SEE ALSO
 .Bl -item
 .It
