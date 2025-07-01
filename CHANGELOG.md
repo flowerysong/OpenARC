@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+### Changed
+
+### Fixed
+
 ## [1.2.2](https://github.com/flowerysong/OpenARC/releases/tag/v1.2.2) - 2025-07-01
 
 Mainly documentation changes.

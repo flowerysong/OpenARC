@@ -14,9 +14,9 @@ AC_PREREQ(2.61)
 #
 m4_define([VERSION_RELEASE], 1)
 m4_define([VERSION_MAJOR_REV], 2)
-m4_define([VERSION_MINOR_REV], 2)
+m4_define([VERSION_MINOR_REV], 3)
 # leave this empty for an actual release
-m4_define([VERSION_PRE], [])
+m4_define([VERSION_PRE], [pre0])
 
 #
 # Library version, only update at release time
