@@ -68,13 +68,24 @@ deliberately broken, but this is the oldest version we test against.
 ### DNF-based systems
 
 ```
-$ dnf install autoconf automake gcc jansson-devel libbsd-devel libidn2-devel libtool openssl-devel sendmail-milter-devel
+dnf install autoconf automake gcc jansson-devel libbsd-devel libidn2-devel libtool openssl-devel sendmail-milter-devel
 ```
 
 ### Ubuntu
 
 ```
-$ apt install build-essential libbsd-dev libidn2-dev libjansson-dev libmilter-dev libssl-dev
+apt install build-essential libbsd-dev libidn2-dev libjansson-dev libmilter-dev libssl-dev
+```
+
+### FreeBSD
+
+```
+pkg install autoconf autoconf-archive automake jansson libidn2 libtool pkgconf
+```
+
+### Alpine
+```
+apk add autoconf automake bsd-compat-headers gcc jansson-dev libidn2-dev libmilter-dev libtool make musl-dev openssl-dev
 ```
 
 ## Installation
