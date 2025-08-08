@@ -94,9 +94,6 @@ AC_SEARCH_LIBS(inet_ntop, resolv nsl,
 AC_SEARCH_LIBS(getaddrinfo, resolv,
                AC_DEFINE(HAVE_GETADDRINFO, 1,
                          [Define to 1 if you have the getaddrinfo() function.]))
-AC_SEARCH_LIBS(res_ninit, resolv,
-               AC_DEFINE(HAVE_RES_NINIT, 1,
-                         [Define to 1 if you have the res_ninit() function.]))
 AC_SEARCH_LIBS(res_setservers, resolv bind,
                AC_DEFINE(HAVE_RES_SETSERVERS, 1,
                          [Define to 1 if you have the res_setservers() function.]))
@@ -105,6 +102,41 @@ AC_SEARCH_LIBS(getopt_long, iberty,
                          [Define to 1 if you have the getopt_long() function.]))
 
 AC_HEADER_RESOLV
+
+# AC_SEARCH_LIBS doesn't work for this check because glibc doesn't
+# actually export the expected symbol, there's a #define in `resolv.h`
+# that points to the real symbol.
+AC_CACHE_CHECK(
+    [for library containing res_ninit],
+    [ac_cv_search_res_ninit],
+    [
+        saved_LIBS=$LIBS
+        AC_LANG_CONFTEST([AC_LANG_PROGRAM([@%:@include <resolv.h>], [res_ninit(NULL);])])
+        for ac_lib in '' resolv
+        do
+            if test -z "$ac_lib"; then
+                ac_res="none required"
+            else
+                ac_res=-l$ac_lib
+                LIBS="-l$ac_lib $ac_func_search_save_LIBS"
+            fi
+            AC_LINK_IFELSE([], [AS_VAR_SET([ac_cv_search_res_ninit], [$ac_res])])
+            AS_VAR_SET_IF([ac_cv_search_res_ninit], [break])
+        done
+        AS_VAR_SET_IF([ac_cv_search_res_ninit], [], [AS_VAR_SET([ac_cv_search_res_ninit], [no])])
+        rm conftest.$ac_ext
+        LIBS=$saved_LIBS
+    ]
+)
+AS_IF([test "$ac_cv_search_res_ninit" != no],
+    [
+        test "$ac_cv_search_res_ninit" = "none required" || LIBS="$ac_res $LIBS"
+        AC_DEFINE(
+            HAVE_RES_NINIT, 1,
+            [Define to 1 if you have the res_ninit() function.]
+        )
+    ]
+)
 
 #
 # Check for types
