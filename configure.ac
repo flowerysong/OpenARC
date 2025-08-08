@@ -94,9 +94,6 @@ AC_SEARCH_LIBS(inet_ntop, resolv nsl,
 AC_SEARCH_LIBS(getaddrinfo, resolv,
                AC_DEFINE(HAVE_GETADDRINFO, 1,
                          [Define to 1 if you have the getaddrinfo() function.]))
-AC_SEARCH_LIBS(res_setservers, resolv bind,
-               AC_DEFINE(HAVE_RES_SETSERVERS, 1,
-                         [Define to 1 if you have the res_setservers() function.]))
 AC_SEARCH_LIBS(getopt_long, iberty,
                AC_DEFINE(HAVE_GETOPT_LONG, 1,
                          [Define to 1 if you have the getopt_long() function.]))
