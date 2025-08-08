@@ -184,6 +184,7 @@ AC_SUBST([LIBRESOLV])
 #
 # Checks for header files
 #
+AC_CHECK_HEADER([sys/queue.h], [], [AC_MSG_ERROR([sys/queue.h not found])])
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h iso/limits_iso.h netdb.h netinet/in.h paths.h stdlib.h string.h sys/file.h sys/param.h sys/socket.h sys/time.h syslog.h unistd.h stdint.h])
 
 #
