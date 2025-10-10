@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- `configure` check for `res_ninit()`
+
 
 ## [1.2.2](https://github.com/flowerysong/OpenARC/releases/tag/v1.2.2) - 2025-07-01
 
