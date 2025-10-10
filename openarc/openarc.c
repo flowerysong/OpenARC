@@ -113,6 +113,7 @@ struct arcf_config
     bool            conf_keeptmpfiles;      /* keep temp files */
     bool            conf_finalreceiver;     /* act as final receiver */
     bool            conf_overridecv;        /* allow A-R to override CV */
+    bool            conf_authrescomments;   /* include comments in A-R */
     bool            conf_authresip;         /* include remote IP in A-R */
     unsigned int    conf_refcnt;            /* reference count */
     unsigned int    conf_mode;              /* mode flags */
@@ -1165,6 +1166,7 @@ arcf_config_new(void)
 
     new->conf_maxhdrsz = DEFMAXHDRSZ;
     new->conf_safekeys = true;
+    new->conf_authrescomments = true;
     new->conf_authresip = true;
 
     new->conf_ret_disabled = SMFIS_ACCEPT;
@@ -1512,6 +1514,9 @@ arcf_config_load(struct config      *data,
 
         (void) config_get(data, "PermitAuthenticationOverrides",
                           &conf->conf_overridecv, sizeof conf->conf_overridecv);
+
+        config_get(data, "AuthResComments", &conf->conf_authrescomments,
+                   sizeof conf->conf_authrescomments);
 
         config_get(data, "AuthResIP", &conf->conf_authresip,
                    sizeof conf->conf_authresip);
@@ -3847,8 +3852,11 @@ mlfi_eom(SMFICTX *ctx)
             {
                 if (ar.ares_result[i].result_ptype[j] == ARES_PTYPE_COMMENT)
                 {
-                    arc_dstring_printf(afc->mctx_tmpstr, " %s",
-                                       ar.ares_result[i].result_value[j]);
+                    if (conf->conf_authrescomments)
+                    {
+                        arc_dstring_printf(afc->mctx_tmpstr, " %s",
+                                           ar.ares_result[i].result_value[j]);
+                    }
                 }
                 else
                 {

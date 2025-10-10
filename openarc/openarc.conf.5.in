@@ -53,6 +53,11 @@ integer values default to
 and string and dataset values default to being undefined.
 .Sh PARAMETERS
 .Bl -tag -width Ds
+.It Cm AuthResComments Pq boolean
+Controls whether Authentication-Results headers include any comments parsed from
+the previously existing headers.
+The default is
+.Cm true .
 .It Cm AuthResIP Pq boolean
 Controls whether Authentication-Results headers include the remote IP.
 The default is

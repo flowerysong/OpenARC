@@ -324,6 +324,22 @@ def test_milter_ar(run_miltertest, data):
     assert res['headers'][3] == ['ARC-Authentication-Results', f' i=1; example.com; {data[1]}']
 
 
+def test_milter_authrescomments(run_miltertest):
+    """AuthResComments=false strips out even reasonably-placed comments"""
+    res = run_miltertest(
+        [
+            [
+                'Authentication-Results',
+                'example.com; (a)spf (Sender Policy Framework) = pass (good) smtp (mail transfer) . (protocol) mailfrom = foo@example.com',
+            ]
+        ]
+    )
+    assert res['headers'][3] == [
+        'ARC-Authentication-Results',
+        ' i=1; example.com; spf=pass smtp.mailfrom=foo@example.com;\n\tarc=none smtp.remote-ip=127.0.0.1',
+    ]
+
+
 def test_milter_ar_override(run_miltertest):
     """Override the chain validation state with Authentication-Results"""
     res = run_miltertest()

@@ -3,6 +3,7 @@
 # Only brief examples of each configuration option are provided. For
 # detailed documentation, consult the openarc.conf(5) man page.
 
+# AuthResComments               true
 # AuthResIP                     true
 
 AuthservID                      example.com
