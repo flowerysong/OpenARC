@@ -1166,7 +1166,7 @@ arcf_config_new(void)
 
     new->conf_maxhdrsz = DEFMAXHDRSZ;
     new->conf_safekeys = true;
-    new->conf_authrescomments = true;
+    new->conf_authrescomments = false;
     new->conf_authresip = true;
 
     new->conf_ret_disabled = SMFIS_ACCEPT;

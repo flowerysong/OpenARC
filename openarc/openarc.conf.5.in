@@ -56,8 +56,6 @@ and string and dataset values default to being undefined.
 .It Cm AuthResComments Pq boolean
 Controls whether Authentication-Results headers include any comments parsed from
 the previously existing headers.
-The default is
-.Cm true .
 .It Cm AuthResIP Pq boolean
 Controls whether Authentication-Results headers include the remote IP.
 The default is
