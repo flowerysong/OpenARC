@@ -2,14 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## [1.3.0](https://github.com/flowerysong/OpenARC/releases/tag/v1.3.0) - 2025-10-29
 
 ### Added
 - milter - `AuthResComments` configuration option to control whether
   comments are preserved. Defaults to false due to credible reports of
   Microsoft having broken comment parsing.
-
-### Changed
 
 ### Fixed
 - `configure` check for `res_ninit()`
