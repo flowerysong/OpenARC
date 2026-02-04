@@ -73,6 +73,7 @@ struct nametable aresults[] = {
 };
 
 struct nametable ptypes[] = {
+    {"arc",    ARES_PTYPE_ARC    },
     {"body",   ARES_PTYPE_BODY   },
     {"dns",    ARES_PTYPE_DNS    },
     {"header", ARES_PTYPE_HEADER },
