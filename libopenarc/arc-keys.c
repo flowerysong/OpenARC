@@ -213,7 +213,7 @@ arc_get_key_dns(ARC_MESSAGE *msg, char *buf, size_t buflen)
 
     /* set up pointers */
     memcpy(&hdr, ansbuf, sizeof hdr);
-    cp = (unsigned char *) &ansbuf + HFIXEDSZ;
+    cp = (unsigned char *) &ansbuf + NS_HFIXEDSZ;
     eom = (unsigned char *) &ansbuf + anslen;
 
     /* skip over the name at the front of the answer */

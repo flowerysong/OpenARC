@@ -173,7 +173,7 @@ arc_res_query(void          *srv,
     int                n;
     int                ret;
     struct arc_res_qh *rq;
-    unsigned char      qbuf[HFIXEDSZ + MAXPACKET];
+    unsigned char      qbuf[NS_HFIXEDSZ + MAXPACKET];
 #ifdef HAVE_RES_NINIT
     struct __res_state *statp;
 #endif /* HAVE_RES_NINIT */

@@ -292,7 +292,7 @@ arc_check_dns_reply(unsigned char *ansbuf, size_t anslen, int xclass, int xtype)
 
     /* set up pointers */
     memcpy(&hdr, ansbuf, sizeof hdr);
-    cp = ansbuf + HFIXEDSZ;
+    cp = ansbuf + NS_HFIXEDSZ;
     eom = ansbuf + anslen;
 
     /* skip over the name at the front of the answer */
