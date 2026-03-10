@@ -60,7 +60,7 @@ jobs:
             3.8
 
       - name: Install Python dependencies
-        run: sudo pip install pytest miltertest dkimpy[ARC]
+        run: sudo pip install pytest miltertest inline_snapshot dkimpy[ARC] dirty_equals
 
       - name: Build OpenARC
         run: |

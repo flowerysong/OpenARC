@@ -4,6 +4,9 @@ import subprocess
 
 import pytest
 
+from dirty_equals import IsStr
+from inline_snapshot import snapshot
+
 HAS_DKIMPY = True
 try:
     from dkim import ARC
@@ -46,11 +49,17 @@ def test_dkimpy_sign(run_miltertest, private_key, dkimpy):
     ]
     res = run_miltertest(hdrs, False)
 
-    assert res['headers'][0] == ['Authentication-Results', ' example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1']
-    assert res['headers'][1][0] == 'ARC-Seal'
-    assert 'cv=pass' in res['headers'][1][1]
-    assert res['headers'][2][0] == 'ARC-Message-Signature'
-    assert res['headers'][3] == ['ARC-Authentication-Results', ' i=2; example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1']
+    assert res['headers'] == snapshot(
+        [
+            ['Authentication-Results', ' example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1'],
+            ['ARC-Seal', IsStr(regex=r' i=2; d=example\.com; s=elpmaxe; a=rsa-sha256; cv=pass; t=1234567890;\s+(?s:.+)')],
+            [
+                'ARC-Message-Signature',
+                IsStr(regex=r' i=2; d=example\.com; s=elpmaxe; a=rsa-sha256;\s+c=relaxed/simple; t=1234567890;\s+h=Subject:From:To;\s+(?s:.+)'),
+            ],
+            ['ARC-Authentication-Results', ' i=2; example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1'],
+        ]
+    )
 
 
 def test_dkimpy_verify(run_miltertest, private_key, dkimpy):
@@ -108,8 +117,17 @@ def test_perl_sign(run_miltertest, private_key, perl_mail_dkim):
     ]
 
     res = run_miltertest(hdrs, False)
-    assert res['headers'][0] == ['Authentication-Results', ' example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1']
-    assert res['headers'][1][0] == 'ARC-Seal'
-    assert 'cv=pass' in res['headers'][1][1]
-    assert res['headers'][2][0] == 'ARC-Message-Signature'
-    assert res['headers'][3] == ['ARC-Authentication-Results', ' i=2; example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1']
+    assert res['headers'] == snapshot(
+        [
+            ['Authentication-Results', ' example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1'],
+            [
+                'ARC-Seal',
+                IsStr(regex=r' i=2; d=example.com; s=elpmaxe; a=rsa-sha256; cv=pass; t=1234567890;\s+(?s:.+)'),
+            ],
+            [
+                'ARC-Message-Signature',
+                IsStr(regex=r' i=2; d=example.com; s=elpmaxe; a=rsa-sha256;\s+c=relaxed/simple; t=1234567890;\s+h=Subject:From:To;\s+(?s:.+)'),
+            ],
+            ['ARC-Authentication-Results', ' i=2; example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1'],
+        ]
+    )
