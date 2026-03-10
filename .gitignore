@@ -54,6 +54,7 @@ stamp-h1
 *~
 *.cache
 *#*
+.venv
 .vscode
 
 # compilation artifacts

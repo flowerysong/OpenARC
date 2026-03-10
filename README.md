@@ -116,6 +116,8 @@ Tests can be run with `make check`. OpenARC's test suite requires:
 
 * Python >= 3.8
 * [pytest](https://pytest.org)
+* [dirty-equals](https://github.com/samuelcolvin/dirty-equals)
+* [inline-snapshot](https://15r10nk.github.io/inline-snapshot/)
 * The Python [miltertest](https://pypi.org/project/miltertest/) library
 
 There are also optional test dependencies whose associated tests will be

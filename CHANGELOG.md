@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
+* tests - migrated from manual "snapshots" to `inline-snapshot`.
 
 ### Fixed
 
