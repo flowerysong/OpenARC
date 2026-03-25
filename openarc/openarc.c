@@ -3835,8 +3835,9 @@ mlfi_eom(SMFICTX *ctx)
 
             if (arc_dstring_len(afc->mctx_tmpstr) > 0)
             {
-                arc_dstring_cat(afc->mctx_tmpstr, ";\n\t");
+                arc_dstring_cat(afc->mctx_tmpstr, ";");
             }
+            arc_dstring_cat(afc->mctx_tmpstr, "\n\t");
 
             arc_dstring_printf(afc->mctx_tmpstr, "%s=%s",
                                ares_getmethod(ar.ares_result[i].result_method),
@@ -3875,8 +3876,10 @@ mlfi_eom(SMFICTX *ctx)
         {
             if (arc_dstring_len(afc->mctx_tmpstr) > 0)
             {
-                arc_dstring_cat(afc->mctx_tmpstr, ";\n\t");
+                arc_dstring_cat(afc->mctx_tmpstr, ";");
             }
+            arc_dstring_cat(afc->mctx_tmpstr, "\n\t");
+
             add_arc_authres(afc, conf, ipbuf);
         }
 
