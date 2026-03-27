@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 * tests - migrated from manual "snapshots" to `inline-snapshot`.
+* milter - `ARC-Authentication-Results` is returned with a linebreak before
+  the first resinfo.
 
 ### Fixed
 
