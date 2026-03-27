@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Lint code formatting
         run: |
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install flake8
         run: sudo pip install ruff
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: apt update
         run: sudo apt update
@@ -47,7 +47,7 @@ jobs:
         run: sudo apt install libbsd-dev libidn2-dev libjansson-dev libmail-dkim-perl libmilter-dev libssl-dev
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           # 3.8 is listed last because it's the lowest version we support,
           # so we want to use it as the default.
