@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 * Bumped lowest supported Python version to 3.10, since older versions are no
   longer available on the runners.
+* milter - reduced importance of log lines about Authentication-Result
+  parsing failures.
 
 ### Fixed
 
