@@ -21,6 +21,11 @@
 #define ULLONG_MAX 0xffffffffffffffffLL
 #endif /* ! ULLONG_MAX */
 
+/* OpenBSD doesn't have NS_HFIXEDSZ */
+#ifndef NS_HFIXEDSZ
+#define NS_HFIXEDSZ HFIXEDSZ
+#endif
+
 #ifndef MIN
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #endif /* ! MIN */
@@ -39,11 +44,6 @@
 
 #define ARC_MAXHEADER      4096 /* buffer for caching one header */
 #define ARC_MAXHOSTNAMELEN 256  /* max. FQDN we support */
-
-/* OpenBSD doesn't have NS_HFIXEDSZ */
-#ifndef NS_HFIXEDSZ
-#define NS_HFIXEDSZ HFIXEDSZ
-#endif
 
 /* defaults */
 #define DEFTMPDIR "/tmp" /* default temporary directory */
