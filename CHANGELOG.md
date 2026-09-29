@@ -2,9 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
-
-### Added
+## [1.3.2](https://github.com/flowerysong/OpenARC/releases/tag/v1.3.2) - 2026-09-28
 
 ### Changed
 * Bumped lowest supported Python version to 3.10, since older versions are no
@@ -13,6 +11,7 @@ All notable changes to this project will be documented in this file.
   parsing failures.
 
 ### Fixed
+* Build issue on OpenBSD
 
 ## [1.3.1](https://github.com/flowerysong/OpenARC/releases/tag/v1.3.1) - 2026-09-28
 
