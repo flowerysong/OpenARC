@@ -40,6 +40,11 @@
 #define ARC_MAXHEADER      4096 /* buffer for caching one header */
 #define ARC_MAXHOSTNAMELEN 256  /* max. FQDN we support */
 
+/* OpenBSD doesn't have NS_HFIXEDSZ */
+#ifndef NS_HFIXEDSZ
+#define NS_HFIXEDSZ HFIXEDSZ
+#endif
+
 /* defaults */
 #define DEFTMPDIR          "/tmp" /* default temporary directory */
 
