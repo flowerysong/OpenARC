@@ -46,7 +46,7 @@
 #define ARC_MAXHOSTNAMELEN 256  /* max. FQDN we support */
 
 /* defaults */
-#define DEFTMPDIR "/tmp" /* default temporary directory */
+#define DEFTMPDIR          "/tmp" /* default temporary directory */
 
 /*
 **  ARC_KVSETTYPE -- types of key-value sets
