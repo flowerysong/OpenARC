@@ -144,7 +144,7 @@ This is not useful in a production environment.
 Names a file to be opened and read as an additional configuration file.
 Nesting is allowed to a maximum of five levels.
 .It Cm InternalHosts Pq dataset
-Identifies a set of hosts whose connections should be treated as
+Path to a file containing hosts whose connections should be treated as
 "internal" by this filter.
 Messages received from such sources will not be verified and are instead
 trusted as-is; in particular, their Authentication-Results fields are
@@ -202,11 +202,11 @@ Note that listing a field name here and not listing it in the
 .Cm SignHeaders
 list is likely to generate invalid signatures.
 .It Cm PeerList Pq dataset
-Identifies a set of "peers" that identifies clients whose connections
+Path to a file containing a list of "peers" whose connections
 should be accepted without processing by this filter.
-The set should contain on each line a hostname, domain name (e.g.
-".example.com"), IP address, an IPv6 address (including an IPv4 mapped
-address), or a CIDR-style IP specification (e.g. "192.168.1.0/24").
+The file should contain on each line a hostname, domain name (e.g.
+".example.com"), IP address, IPv6 address (including an IPv4 mapped
+address), or CIDR-style IP specification (e.g. "192.168.1.0/24").
 An entry beginning with a bang ("!") character means "not", allowing exclusion
 of specific hosts that are otherwise members of larger sets.
 Host and domain names are matched first, then the IP or IPv6 address depending
@@ -214,7 +214,7 @@ on the connection type.
 More precise entries are preferred over less precise ones, e.g. "192.168.1.1"
 will match before "!192.168.1.0/24".
 The text form of IPv6 addresses will be forced to lowercase when queried
-(RFC5952), so the contents of this data set should also use lowercase.
+(RFC5952), so the entries should also use lowercase.
 The IP address portion of an entry may optionally contain square brackets;
 both forms (with and without) will be checked.
 .It Cm PermitAuthenticationOverrides Pq boolean
