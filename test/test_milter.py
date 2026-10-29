@@ -843,6 +843,34 @@ def test_milter_authresip(run_miltertest):
     )
 
 
+def test_milter_ar_chain(run_miltertest):
+    """AuthResChain adds header.chain"""
+    headers = []
+    for i in range(0, 3):
+        res = run_miltertest(headers)
+        headers = [*[x for x in res['headers'] if x[0] != 'Authentication-Results'], *headers]
+    assert res['headers'] == snapshot(
+        [
+            ['Authentication-Results', ' example.com; arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1 header.chain="example.com:example.com"'],
+            [
+                'ARC-Seal',
+                IsStr(regex=r' i=3; d=example\.com; s=elpmaxe; a=rsa-sha256; cv=pass; t=1234567890;\s+(?s:.+)'),
+            ],
+            [
+                'ARC-Message-Signature',
+                IsStr(regex=r' i=3; d=example\.com; s=elpmaxe; a=rsa-sha256;\s+c=relaxed/simple; t=1234567890;\s+h=From:Date:Subject;\s+(?s:.+)'),
+            ],
+            [
+                'ARC-Authentication-Results',
+                """\
+ i=3; example.com; \n\
+	arc=pass header.oldest-pass=0 smtp.remote-ip=127.0.0.1\
+""",
+            ],
+        ]
+    )
+
+
 def test_milter_finalreceiver(run_miltertest):
     """FinalReceiver adds arc.chain"""
     headers = []

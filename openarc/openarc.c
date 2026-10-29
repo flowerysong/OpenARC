@@ -113,6 +113,7 @@ struct arcf_config
     bool            conf_keeptmpfiles;      /* keep temp files */
     bool            conf_finalreceiver;     /* act as final receiver */
     bool            conf_overridecv;        /* allow A-R to override CV */
+    bool            conf_authreschain;      /* include chain in A-R */
     bool            conf_authrescomments;   /* include comments in A-R */
     bool            conf_authresip;         /* include remote IP in A-R */
     unsigned int    conf_refcnt;            /* reference count */
@@ -1514,6 +1515,9 @@ arcf_config_load(struct config      *data,
 
         (void) config_get(data, "PermitAuthenticationOverrides",
                           &conf->conf_overridecv, sizeof conf->conf_overridecv);
+
+        config_get(data, "AuthResChain", &conf->conf_authreschain,
+                   sizeof conf->conf_authreschain);
 
         config_get(data, "AuthResComments", &conf->conf_authrescomments,
                    sizeof conf->conf_authrescomments);
@@ -3942,20 +3946,6 @@ mlfi_eom(SMFICTX *ctx)
         **  Authentication-Results
         */
 
-        int arcchainlen = arc_chain_custody_str(afc->mctx_arcmsg, arcchainbuf,
-                                                sizeof(arcchainbuf));
-
-        if (arcchainlen >= sizeof(arcchainbuf))
-        {
-            if (conf->conf_dolog)
-            {
-                syslog(LOG_ERR, "%s: arc.chain buffer overflow: %s",
-                       afc->mctx_jobid, "");
-            }
-
-            return conf->conf_ret_unable;
-        }
-
         arc_dstring_blank(afc->mctx_tmpstr);
         arc_dstring_printf(afc->mctx_tmpstr, "%s%s; ",
                            cc->cctx_noleadspc ? " " : "",
@@ -3963,13 +3953,31 @@ mlfi_eom(SMFICTX *ctx)
 
         add_arc_authres(afc, conf, ipbuf);
 
-        if (conf->conf_finalreceiver && arcchainlen > 0)
+        if (conf->conf_authreschain || conf->conf_finalreceiver)
         {
-            bool quote = !ares_istoken(arcchainbuf);
+            int arcchainlen = arc_chain_custody_str(
+                afc->mctx_arcmsg, arcchainbuf, sizeof(arcchainbuf));
 
-            arc_dstring_printf(afc->mctx_tmpstr, " arc.chain=%s%s%s",
-                               quote ? "\"" : "", arcchainbuf,
-                               quote ? "\"" : "");
+            if (arcchainlen >= sizeof(arcchainbuf))
+            {
+                if (conf->conf_dolog)
+                {
+                    syslog(LOG_ERR, "%s: ARC chain buffer overflow: %s",
+                           afc->mctx_jobid, "");
+                }
+
+                return conf->conf_ret_unable;
+            }
+
+            if (arcchainlen > 0)
+            {
+                bool quote = !ares_istoken(arcchainbuf);
+
+                arc_dstring_printf(
+                    afc->mctx_tmpstr, " %s=%s%s%s",
+                    conf->conf_authreschain ? "header.chain" : "arc.chain",
+                    quote ? "\"" : "", arcchainbuf, quote ? "\"" : "");
+            }
         }
 
         if (arcf_insheader(ctx, 0, AUTHRESULTSHDR,

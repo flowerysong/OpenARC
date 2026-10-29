@@ -13,6 +13,7 @@
 
 /* config definition */
 struct configdef arcf_config[] = {
+    {"AuthResChain",                  CONFIG_TYPE_BOOLEAN, false},
     {"AuthResComments",               CONFIG_TYPE_BOOLEAN, false},
     {"AuthResIP",                     CONFIG_TYPE_BOOLEAN, false},
     {"AuthservID",                    CONFIG_TYPE_STRING,  false},
