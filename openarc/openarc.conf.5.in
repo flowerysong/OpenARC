@@ -53,6 +53,11 @@ integer values default to
 and string and dataset values default to being undefined.
 .Sh PARAMETERS
 .Bl -tag -width Ds
+.It Cm AuthResChain Pq boolean
+Add a non-standard
+.Cm header.chain
+field to the Authentication-Results header, showing the domains
+present in the ARC chain.
 .It Cm AuthResComments Pq boolean
 Controls whether Authentication-Results headers include any comments parsed from
 the previously existing headers.
@@ -133,10 +138,14 @@ Some modern UNIX systems suppress core dumps during crashes for security
 reasons if the user ID has changed during the lifetime of the process.
 Currently only supported on Linux.
 .It Cm FinalReceiver Pq boolean
-Add a non-standard
+Add an extremely non-standard
 .Cm arc.chain
 field to the Authentication-Results header, showing the domains
 present in the ARC chain.
+This functionality is deprecated and may be removed in a future release.
+Use
+.Cm AuthResChain
+instead, if you can.
 .It Cm FixedTimestamp Pq string
 Used for testing.
 This is not useful in a production environment.

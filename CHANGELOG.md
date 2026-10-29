@@ -5,8 +5,13 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### Added
+* milter - `AuthResChain` configuration option to add `header.chain` to
+  `Authentication-Results`.
 
 ### Changed
+* milter - `FinalReceiver` is deprecated. The config flag name is unintuitive
+  and the `arc.chain` property that it adds has a non-standard type for no real
+  reason.
 
 ### Fixed
 
